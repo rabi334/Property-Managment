@@ -1,7 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DIRECT_URL || process.env.DATABASE_URL,
+    },
+  },
+});
 
 async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
@@ -30,6 +36,14 @@ async function main() {
       createdById: owner.id,
     },
   });
+
+  // Clean existing data for idempotent re-seeding
+  await prisma.expense.deleteMany();
+  await prisma.payment.deleteMany();
+  await prisma.maintenanceRequest.deleteMany();
+  await prisma.tenant.deleteMany();
+  await prisma.unit.deleteMany();
+  await prisma.property.deleteMany();
 
   // --- Property 1 ---
   const property1 = await prisma.property.create({
