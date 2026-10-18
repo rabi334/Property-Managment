@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
+  // uncomment next line if you use Prisma <5.10
+  // directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  VISITOR
+}
+
+enum PropertyType {
+  apartment
+  commercial
+  mixed_use
+}
+
+enum RentType {
+  monthly
+  yearly
+}
+
+enum UnitStatus {
+  occupied
+  vacant
+  maintenance
+}
+
+enum PaymentMethod {
+  cash
+  bank
+  mobile
+}
+
+enum ExpenseCategory {
+  maintenance
+  utilities
+  renovation
+  other
+}
+
+enum MaintenanceStatus {
+  pending
+  in_progress
+  completed
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  role         UserRole @default(OWNER)
+  phone        String?
+  createdById  String?   @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  createdBy   User?     @relation("CreatedUsers", fields: [createdById], references: [id])
+  createdUsers User[]   @relation("CreatedUsers")
+  properties  Property[]
+  payments    Payment[]
+  expenses    Expense[]
+  maintenance MaintenanceRequest[]
+}
+
+model Property {
+  id          String       @id @default(uuid())
+  name        String
+  type        PropertyType
+  address     String
+  taxRate     Decimal      @map("tax_rate") @db.Decimal(5, 2)
+  description String?
+  imageUrl    String?      @map("image_url") @db.Text
+  createdById String       @map("created_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  createdBy   User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  units       Unit[]
+  expenses    Expense[]
+
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+model Unit {
+  id              String     @id @default(uuid())
+  propertyId      String     @map("property_id")
+  unitName        String     @map("unit_name")
+  rentType        RentType   @map("rent_type")
+  rentAmount      Decimal    @map("rent_amount") @db.Decimal(12, 2)
+  status          UnitStatus @default(vacant)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  property        Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenants         Tenant[]
+  payments        Payment[]
+  maintenance     MaintenanceRequest[]
+
+  @@index([propertyId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum TenantStatus {
+  active
+  past
+}
+
+model Tenant {
+  id               String       @id @default(uuid())
+  fullName         String       @map("full_name")
+  phone            String
+  idNumber         String       @map("id_number")
+  emergencyContact String?      @map("emergency_contact")
+  depositAmount    Decimal      @map("deposit_amount") @db.Decimal(12, 2) @default(0)
+  unitId           String       @map("unit_id")
+  status           TenantStatus @default(active)
+  leaseStartDate   DateTime?    @map("lease_start_date") @db.Date
+  leaseEndDate     DateTime?    @map("lease_end_date") @db.Date
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  unit             Unit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  payments         Payment[]
+
+  @@index([unitId])
+  @@index([status])
+  @@index([leaseEndDate])
+  @@index([createdAt])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  unitId        String        @map("unit_id")
+  tenantId      String        @map("tenant_id")
+  amount        Decimal       @db.Decimal(12, 2)
+  paymentDate   DateTime      @map("payment_date") @db.Date
+  paymentMethod PaymentMethod @map("payment_method")
+  recordedById  String?       @map("recorded_by")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  unit          Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  recordedBy    User?         @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([recordedById])
+  @@index([paymentDate])
+  @@index([createdAt])
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  propertyId  String          @map("property_id")
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(12, 2)
+  description String
+  date        DateTime        @db.Date
+  addedById   String?         @map("added_by")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  property    Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  addedBy     User?           @relation(fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([addedById])
+  @@index([date])
+  @@index([createdAt])
+}
+
+model MaintenanceRequest {
+  id          String            @id @default(uuid())
+  unitId      String            @map("unit_id")
+  title       String
+  description String
+  status      MaintenanceStatus @default(pending)
+  createdById String?           @map("created_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  unit        Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  createdBy   User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([unitId])
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
