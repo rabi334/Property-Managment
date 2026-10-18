@@ -227,6 +227,23 @@ async function main() {
       date: '2025-12-01',
       method: 'bank' as const,
     },
+    // October 2026 payments
+    {
+      tenant: activeTenant1A,
+      unit: unit1A,
+      amount: 8000,
+      date: '2026-10-02',
+      method: 'bank' as const,
+      notes: 'October 2026 rent',
+    },
+    {
+      tenant: activeTenant2A,
+      unit: unit2A,
+      amount: 15000,
+      date: '2026-10-05',
+      method: 'mobile' as const,
+      notes: 'October 2026 rent',
+    },
   ];
 
   for (const p of paymentData) {
@@ -242,6 +259,18 @@ async function main() {
       },
     });
   }
+
+  // --- Expenses ---
+  await prisma.expense.create({
+    data: {
+      propertyId: property1.id,
+      category: 'maintenance',
+      amount: 2500,
+      description: 'Plumbing inspection and repairs',
+      date: new Date('2026-10-10'),
+      addedById: manager.id,
+    },
+  });
 
   console.log('Seed completed.');
   console.log('Owner:', owner.email);

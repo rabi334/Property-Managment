@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { useTheme } from '@/hooks/useTheme';
 
 // ─── Error Boundary ────────────────────────────────────────────────────────
 interface ErrorBoundaryState {
@@ -73,13 +74,19 @@ class ErrorBoundary extends Component<
 // ─── Root Layout ───────────────────────────────────────────────────────────
 export default function RootLayout() {
   useFrameworkReady();
+  const { colors, scheme } = useTheme();
 
   return (
     <ErrorBoundary>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </ErrorBoundary>
   );
 }

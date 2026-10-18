@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { RentType, UnitStatus } from '@/types/database';
 import { unitService } from '@/services/unit.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import { ArrowLeft } from 'lucide-react-native';
 
 const RENT_TYPES: RentType[] = ['monthly', 'yearly'];
@@ -22,6 +23,7 @@ export default function CreateUnitScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ propertyId?: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [unitName, setUnitName] = useState('');
   const [rentType, setRentType] = useState<RentType>('monthly');
@@ -75,21 +77,38 @@ export default function CreateUnitScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Unit</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Add Unit
+        </Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Unit Name *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Unit Name *
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="e.g. Apt 101, Suite A"
+            placeholderTextColor={colors.textSecondary}
             value={unitName}
             onChangeText={setUnitName}
           />
@@ -97,21 +116,27 @@ export default function CreateUnitScreen() {
 
         <View style={styles.row}>
           <View style={[styles.inputGroup, styles.rowItem]}>
-            <Text style={styles.label}>Rent Type *</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              Rent Type *
+            </Text>
             <View style={styles.chipGroup}>
               {RENT_TYPES.map((type) => (
                 <TouchableOpacity
                   key={type}
                   style={[
                     styles.chip,
-                    rentType === type && styles.chipSelected,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor:
+                        rentType === type ? colors.accent : colors.card,
+                    },
                   ]}
                   onPress={() => setRentType(type)}
                 >
                   <Text
                     style={[
                       styles.chipText,
-                      rentType === type && styles.chipTextSelected,
+                      { color: rentType === type ? '#fff' : colors.textSecondary },
                     ]}
                   >
                     {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -122,18 +147,27 @@ export default function CreateUnitScreen() {
           </View>
 
           <View style={[styles.inputGroup, styles.rowItem]}>
-            <Text style={styles.label}>Status *</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              Status *
+            </Text>
             <View style={styles.chipGroup}>
               {UNIT_STATUSES.map((s) => (
                 <TouchableOpacity
                   key={s}
-                  style={[styles.chip, status === s && styles.chipSelected]}
+                  style={[
+                    styles.chip,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor:
+                        status === s ? colors.accent : colors.card,
+                    },
+                  ]}
                   onPress={() => setStatus(s)}
                 >
                   <Text
                     style={[
                       styles.chipText,
-                      status === s && styles.chipTextSelected,
+                      { color: status === s ? '#fff' : colors.textSecondary },
                     ]}
                   >
                     {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -145,10 +179,20 @@ export default function CreateUnitScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Rent Amount *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Rent Amount *
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter rent amount"
+            placeholderTextColor={colors.textSecondary}
             value={rentAmount}
             onChangeText={setRentAmount}
             keyboardType="decimal-pad"
@@ -156,7 +200,11 @@ export default function CreateUnitScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.buttonDisabled]}
+          style={[
+            styles.submitButton,
+            { backgroundColor: colors.accent },
+            isLoading && styles.buttonDisabled,
+          ]}
           onPress={handleSubmit}
           disabled={isLoading}
         >
@@ -174,7 +222,6 @@ export default function CreateUnitScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
   },
   header: {
     flexDirection: 'row',

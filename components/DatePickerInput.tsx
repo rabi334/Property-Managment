@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useTheme } from '@/hooks/useTheme';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -61,6 +62,7 @@ export default function DatePickerInput({
   minimumYear = 2000,
   maximumYear = CURRENT_YEAR + 10,
 }: DatePickerInputProps) {
+  const { colors } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const initial = parseDate(value);
   const [visible, setVisible] = useState(false);
@@ -140,9 +142,21 @@ export default function DatePickerInput({
 
   return (
     <>
-      <TouchableOpacity style={styles.field} onPress={handleOpen} activeOpacity={0.7}>
-        <Calendar size={18} color="#6b7280" />
-        <Text style={[styles.fieldText, !value && styles.placeholder]}>
+      <TouchableOpacity
+        style={[
+          styles.field,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+        onPress={handleOpen}
+        activeOpacity={0.7}
+      >
+        <Calendar size={18} color={colors.textSecondary} />
+        <Text
+          style={[
+            styles.fieldText,
+            { color: value ? colors.textPrimary : colors.textSecondary },
+          ]}
+        >
           {value ? formatDisplay(value) : placeholder}
         </Text>
       </TouchableOpacity>
@@ -150,32 +164,32 @@ export default function DatePickerInput({
       <Modal visible={visible} transparent animationType="slide" onRequestClose={handleCancel}>
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.overlayBg} onPress={handleCancel} />
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, { backgroundColor: colors.card }]}>
             {/* Header */}
-            <View style={styles.sheetHeader}>
+            <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity onPress={handleCancel} style={styles.headerBtn}>
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
               </TouchableOpacity>
-              <Text style={styles.sheetTitle}>Select Date</Text>
+              <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Select Date</Text>
               <TouchableOpacity onPress={handleConfirm} style={styles.headerBtn}>
-                <Text style={styles.confirmText}>Done</Text>
+                <Text style={[styles.confirmText, { color: colors.accent }]}>Done</Text>
               </TouchableOpacity>
             </View>
 
             {/* Month navigator */}
             <View style={styles.monthNavRow}>
               <TouchableOpacity onPress={prevMonth} style={styles.navBtn}>
-                <ChevronLeft size={22} color="#2563eb" />
+                <ChevronLeft size={22} color={colors.accent} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setMonthPickerVisible(true)}
                 style={styles.labelBtn}
                 activeOpacity={0.7}
               >
-                <Text style={styles.monthLabel}>{MONTHS[tempMonth]}</Text>
+                <Text style={[styles.monthLabel, { color: colors.textPrimary }]}>{MONTHS[tempMonth]}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={nextMonth} style={styles.navBtn}>
-                <ChevronRight size={22} color="#2563eb" />
+                <ChevronRight size={22} color={colors.accent} />
               </TouchableOpacity>
             </View>
 
@@ -186,21 +200,27 @@ export default function DatePickerInput({
                 style={styles.navBtn}
                 disabled={tempYear <= minimumYear}
               >
-                <ChevronLeft size={20} color={tempYear <= minimumYear ? '#d1d5db' : '#2563eb'} />
+                <ChevronLeft
+                  size={20}
+                  color={tempYear <= minimumYear ? colors.border : colors.accent}
+                />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setYearPickerVisible(true)}
                 style={styles.labelBtn}
                 activeOpacity={0.7}
               >
-                <Text style={styles.yearLabel}>{tempYear}</Text>
+                <Text style={[styles.yearLabel, { color: colors.textSecondary }]}>{tempYear}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={nextYear}
                 style={styles.navBtn}
                 disabled={tempYear >= maximumYear}
               >
-                <ChevronRight size={20} color={tempYear >= maximumYear ? '#d1d5db' : '#2563eb'} />
+                <ChevronRight
+                  size={20}
+                  color={tempYear >= maximumYear ? colors.border : colors.accent}
+                />
               </TouchableOpacity>
             </View>
 
@@ -216,12 +236,18 @@ export default function DatePickerInput({
                       height: gridMetrics.cellSize,
                       marginRight: (d % 7) === 0 ? 0 : gridMetrics.gap,
                       marginBottom: gridMetrics.gap,
+                      backgroundColor: tempDay === d ? colors.accent : 'transparent',
                     },
-                    tempDay === d && styles.dayCellSelected,
                   ]}
                   onPress={() => setTempDay(d)}
                 >
-                  <Text style={[styles.dayText, tempDay === d && styles.dayTextSelected]}>
+                  <Text
+                    style={[
+                      styles.dayText,
+                      { color: tempDay === d ? '#fff' : colors.textPrimary },
+                      tempDay === d && styles.dayTextSelected,
+                    ]}
+                  >
                     {d}
                   </Text>
                 </TouchableOpacity>
@@ -230,7 +256,7 @@ export default function DatePickerInput({
 
             {/* Selected summary */}
             <View style={styles.summary}>
-              <Text style={styles.summaryText}>
+              <Text style={[styles.summaryText, { color: colors.accent }]}>
                 {MONTHS_SHORT[tempMonth]} {Math.min(tempDay, daysInMonth)}, {tempYear}
               </Text>
             </View>
@@ -247,8 +273,8 @@ export default function DatePickerInput({
                   style={styles.pickerOverlayBg}
                   onPress={() => setMonthPickerVisible(false)}
                 />
-                <View style={styles.pickerCard}>
-                  <Text style={styles.pickerTitle}>Select month</Text>
+                <View style={[styles.pickerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={[styles.pickerTitle, { color: colors.textPrimary }]}>Select month</Text>
                   <ScrollView style={styles.pickerList} contentContainerStyle={styles.pickerListContent}>
                     {MONTHS.map((m, idx) => (
                       <TouchableOpacity
@@ -257,9 +283,17 @@ export default function DatePickerInput({
                           setTempMonth(idx);
                           setMonthPickerVisible(false);
                         }}
-                        style={[styles.pickerItem, idx === tempMonth && styles.pickerItemSelected]}
+                        style={[
+                          styles.pickerItem,
+                          idx === tempMonth && { backgroundColor: colors.currentBg },
+                        ]}
                       >
-                        <Text style={[styles.pickerItemText, idx === tempMonth && styles.pickerItemTextSelected]}>
+                        <Text
+                          style={[
+                            styles.pickerItemText,
+                            { color: idx === tempMonth ? colors.accent : colors.textPrimary },
+                          ]}
+                        >
                           {m}
                         </Text>
                       </TouchableOpacity>
@@ -281,8 +315,8 @@ export default function DatePickerInput({
                   style={styles.pickerOverlayBg}
                   onPress={() => setYearPickerVisible(false)}
                 />
-                <View style={styles.pickerCard}>
-                  <Text style={styles.pickerTitle}>Select year</Text>
+                <View style={[styles.pickerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={[styles.pickerTitle, { color: colors.textPrimary }]}>Select year</Text>
                   <ScrollView style={styles.pickerList} contentContainerStyle={styles.pickerListContent}>
                     {years.map((y) => (
                       <TouchableOpacity
@@ -291,9 +325,17 @@ export default function DatePickerInput({
                           setTempYear(y);
                           setYearPickerVisible(false);
                         }}
-                        style={[styles.pickerItem, y === tempYear && styles.pickerItemSelected]}
+                        style={[
+                          styles.pickerItem,
+                          y === tempYear && { backgroundColor: colors.currentBg },
+                        ]}
                       >
-                        <Text style={[styles.pickerItemText, y === tempYear && styles.pickerItemTextSelected]}>
+                        <Text
+                          style={[
+                            styles.pickerItemText,
+                            { color: y === tempYear ? colors.accent : colors.textPrimary },
+                          ]}
+                        >
                           {y}
                         </Text>
                       </TouchableOpacity>

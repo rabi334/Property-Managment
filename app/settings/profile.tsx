@@ -12,11 +12,13 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/auth.service';
+import { useTheme } from '@/hooks/useTheme';
 import { ArrowLeft, User, Lock, Eye, EyeOff, Save } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, loadUser } = useAuthStore();
+  const { colors } = useTheme();
 
   // Profile fields
   const [fullName, setFullName] = useState(user?.full_name ?? '');
@@ -101,13 +103,13 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Edit Profile</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -117,42 +119,42 @@ export default function ProfileScreen() {
       >
         {/* ── Profile Info Section ── */}
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionIconCircle}>
-            <User size={18} color="#2563eb" />
+          <View style={[styles.sectionIconCircle, { backgroundColor: colors.background }]}>
+            <User size={18} color={colors.accent} />
           </View>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Personal Information</Text>
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name *</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
               placeholder="Your full name"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSecondary}
               value={fullName}
               onChangeText={setFullName}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Email</Text>
             <TextInput
-              style={[styles.input, styles.inputDisabled]}
+              style={[styles.input, styles.inputDisabled, { backgroundColor: colors.background, borderColor: colors.border, color: colors.textSecondary }]}
               value={user?.email ?? ''}
               editable={false}
             />
-            <Text style={styles.inputHint}>
+            <Text style={[styles.inputHint, { color: colors.textSecondary }]}>
               Email address cannot be changed.
             </Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Phone</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
               placeholder="Phone number"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSecondary}
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -160,7 +162,7 @@ export default function ProfileScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, isSaving && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: colors.accent }, isSaving && styles.buttonDisabled]}
             onPress={handleSaveProfile}
             disabled={isSaving}
           >
@@ -177,21 +179,21 @@ export default function ProfileScreen() {
 
         {/* ── Change Password Section ── */}
         <View style={styles.sectionHeader}>
-          <View style={[styles.sectionIconCircle, styles.sectionIconLock]}>
-            <Lock size={18} color="#7c3aed" />
+          <View style={[styles.sectionIconCircle, { backgroundColor: colors.background }]}>
+            <Lock size={18} color={colors.accent} />
           </View>
-          <Text style={styles.sectionTitle}>Change Password</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Change Password</Text>
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {/* Current Password */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Current Password *</Text>
-            <View style={styles.passwordRow}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Current Password *</Text>
+            <View style={[styles.passwordRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.textPrimary }]}
                 placeholder="Enter your current password"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textSecondary}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 secureTextEntry={!showCurrentPassword}
@@ -202,9 +204,9 @@ export default function ProfileScreen() {
                 onPress={() => setShowCurrentPassword((v) => !v)}
               >
                 {showCurrentPassword ? (
-                  <EyeOff size={20} color="#6b7280" />
+                  <EyeOff size={20} color={colors.textSecondary} />
                 ) : (
-                  <Eye size={20} color="#6b7280" />
+                  <Eye size={20} color={colors.textSecondary} />
                 )}
               </TouchableOpacity>
             </View>
@@ -212,12 +214,12 @@ export default function ProfileScreen() {
 
           {/* New Password */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>New Password *</Text>
-            <View style={styles.passwordRow}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>New Password *</Text>
+            <View style={[styles.passwordRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.textPrimary }]}
                 placeholder="At least 6 characters"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textSecondary}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry={!showNewPassword}
@@ -228,9 +230,9 @@ export default function ProfileScreen() {
                 onPress={() => setShowNewPassword((v) => !v)}
               >
                 {showNewPassword ? (
-                  <EyeOff size={20} color="#6b7280" />
+                  <EyeOff size={20} color={colors.textSecondary} />
                 ) : (
-                  <Eye size={20} color="#6b7280" />
+                  <Eye size={20} color={colors.textSecondary} />
                 )}
               </TouchableOpacity>
             </View>
@@ -270,17 +272,18 @@ export default function ProfileScreen() {
 
           {/* Confirm New Password */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirm New Password *</Text>
-            <View style={styles.passwordRow}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm New Password *</Text>
+            <View style={[styles.passwordRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <TextInput
                 style={[
                   styles.passwordInput,
+                  { color: colors.textPrimary },
                   confirmPassword.length > 0 &&
                     confirmPassword !== newPassword &&
                     styles.inputError,
                 ]}
                 placeholder="Repeat new password"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textSecondary}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
@@ -291,9 +294,9 @@ export default function ProfileScreen() {
                 onPress={() => setShowConfirmPassword((v) => !v)}
               >
                 {showConfirmPassword ? (
-                  <EyeOff size={20} color="#6b7280" />
+                  <EyeOff size={20} color={colors.textSecondary} />
                 ) : (
-                  <Eye size={20} color="#6b7280" />
+                  <Eye size={20} color={colors.textSecondary} />
                 )}
               </TouchableOpacity>
             </View>
@@ -308,7 +311,7 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={[
               styles.button,
-              styles.buttonPurple,
+              { backgroundColor: colors.accent },
               isChangingPassword && styles.buttonDisabled,
             ]}
             onPress={handleChangePassword}

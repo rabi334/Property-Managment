@@ -15,6 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { PropertyType } from '@/types/database';
 import { propertyService } from '@/services/property.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import { ArrowLeft, Camera, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -24,6 +25,7 @@ export default function EditPropertyScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [name, setName] = useState('');
   const [type, setType] = useState<PropertyType>('apartment');
@@ -147,26 +149,40 @@ export default function EditPropertyScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Property</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Edit Property
+        </Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
         {/* Image Picker */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Property Image</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Property Image
+          </Text>
           {imageUri ? (
             <View style={styles.imagePreviewWrapper}>
               <Image
@@ -181,7 +197,7 @@ export default function EditPropertyScreen() {
                 <X size={16} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.changeImageBtn}
+                style={[styles.changeImageBtn, { backgroundColor: colors.accent }]}
                 onPress={pickImage}
               >
                 <Camera size={14} color="#fff" />
@@ -189,10 +205,18 @@ export default function EditPropertyScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-              <Camera size={32} color="#9ca3af" />
-              <Text style={styles.imagePickerText}>Tap to add a photo</Text>
-              <Text style={styles.imagePickerHint}>
+            <TouchableOpacity
+              style={[
+                styles.imagePicker,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+              onPress={pickImage}
+            >
+              <Camera size={32} color={colors.textSecondary} />
+              <Text style={[styles.imagePickerText, { color: colors.textPrimary }]}>
+                Tap to add a photo
+              </Text>
+              <Text style={[styles.imagePickerHint, { color: colors.textSecondary }]}>
                 Recommended: 16:9 ratio
               </Text>
             </TouchableOpacity>
@@ -200,31 +224,47 @@ export default function EditPropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Property Name *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Property Name *
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter property name"
+            placeholderTextColor={colors.textSecondary}
             value={name}
             onChangeText={setName}
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Property Type *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Property Type *
+          </Text>
           <View style={styles.typeSelector}>
             {PROPERTY_TYPES.map((t) => (
               <TouchableOpacity
                 key={t}
                 style={[
                   styles.typeOption,
-                  type === t && styles.typeOptionSelected,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor:
+                      type === t ? colors.accent : colors.card,
+                  },
                 ]}
                 onPress={() => setType(t)}
               >
                 <Text
                   style={[
                     styles.typeOptionText,
-                    type === t && styles.typeOptionTextSelected,
+                    { color: type === t ? '#fff' : colors.textSecondary },
                   ]}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -235,10 +275,21 @@ export default function EditPropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Address *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Address *
+          </Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[
+              styles.input,
+              styles.textArea,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter property address"
+            placeholderTextColor={colors.textSecondary}
             value={address}
             onChangeText={setAddress}
             multiline
@@ -247,10 +298,20 @@ export default function EditPropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tax Rate (%)</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Tax Rate (%)
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter tax rate"
+            placeholderTextColor={colors.textSecondary}
             value={taxRate}
             onChangeText={setTaxRate}
             keyboardType="decimal-pad"
@@ -258,10 +319,21 @@ export default function EditPropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Description</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Description
+          </Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[
+              styles.input,
+              styles.textArea,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter property description"
+            placeholderTextColor={colors.textSecondary}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -270,7 +342,11 @@ export default function EditPropertyScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, isSaving && styles.buttonDisabled]}
+          style={[
+            styles.submitButton,
+            { backgroundColor: colors.accent },
+            isSaving && styles.buttonDisabled,
+          ]}
           onPress={handleSubmit}
           disabled={isSaving}
         >

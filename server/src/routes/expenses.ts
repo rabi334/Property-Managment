@@ -63,8 +63,18 @@ router.get('/', async (req: Request, res: Response) => {
     if (propertyId) where.propertyId = propertyId;
     if (from || to) {
       where.date = {
-        ...(from ? { gte: new Date(from) } : {}),
-        ...(to ? { lte: new Date(to) } : {}),
+        ...(from
+          ? {
+              gte: new Date(
+                from.includes('T') ? from : `${from}T00:00:00.000Z`,
+              ),
+            }
+          : {}),
+        ...(to
+          ? {
+              lte: new Date(to.includes('T') ? to : `${to}T23:59:59.999Z`),
+            }
+          : {}),
       };
     }
 
@@ -97,8 +107,20 @@ router.get(
         from || to
           ? {
               date: {
-                ...(from ? { gte: new Date(from) } : {}),
-                ...(to ? { lte: new Date(to) } : {}),
+                ...(from
+                  ? {
+                      gte: new Date(
+                        from.includes('T') ? from : `${from}T00:00:00.000Z`,
+                      ),
+                    }
+                  : {}),
+                ...(to
+                  ? {
+                      lte: new Date(
+                        to.includes('T') ? to : `${to}T23:59:59.999Z`,
+                      ),
+                    }
+                  : {}),
               },
             }
           : {};

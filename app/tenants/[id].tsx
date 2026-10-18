@@ -13,6 +13,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { tenantService } from '@/services/tenant.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import { Button } from 'react-native';
 import {
   ArrowLeft,
@@ -29,6 +30,7 @@ export default function TenantDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [tenant, setTenant] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,35 +124,54 @@ export default function TenantDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   if (!tenant) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Tenant not found</Text>
+      <View
+        style={[
+          styles.errorContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+          Tenant not found
+        </Text>
       </View>
     );
   }
 
   const isActive = tenant.status === 'active';
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tenant Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Tenant Details
+        </Text>
         <View style={styles.headerActions}>
           {canManage && (
             <TouchableOpacity
               onPress={() => router.push(`/tenants/edit/${id}`)}
               style={{ marginRight: 12 }}
             >
-              <Edit size={20} color="#2563eb" />
+              <Edit size={20} color={colors.accent} />
             </TouchableOpacity>
           )}
           {canDelete && (
@@ -162,19 +183,36 @@ export default function TenantDetailScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.card}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
+          ]}
+        >
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{tenant.full_name}</Text>
+            <Text style={[styles.name, { color: colors.textPrimary }]}>
+              {tenant.full_name}
+            </Text>
             <View
               style={[
                 styles.statusBadge,
-                isActive ? styles.badgeActive : styles.badgePast,
+                {
+                  backgroundColor: isActive
+                    ? colors.currentBg
+                    : colors.background,
+                  borderColor: colors.border,
+                  borderWidth: isActive ? 0 : 1,
+                },
               ]}
             >
               <Text
                 style={[
                   styles.statusBadgeText,
-                  isActive ? styles.badgeTextActive : styles.badgeTextPast,
+                  {
+                    color: isActive
+                      ? colors.currentText
+                      : colors.textSecondary,
+                  },
                 ]}
               >
                 {isActive ? 'Active' : 'Past'}
@@ -183,39 +221,45 @@ export default function TenantDetailScreen() {
           </View>
 
           {tenant.unit && (
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {tenant.unit.unit_name} • {tenant.unit.property?.name}
             </Text>
           )}
 
           <View style={styles.row}>
-            <Phone size={16} color="#6b7280" />
-            <Text style={styles.rowText}>{tenant.phone}</Text>
+            <Phone size={16} color={colors.textSecondary} />
+            <Text style={[styles.rowText, { color: colors.textSecondary }]}>
+              {tenant.phone}
+            </Text>
           </View>
 
           <View style={styles.row}>
-            <IdCard size={16} color="#6b7280" />
-            <Text style={styles.rowText}>{tenant.id_number}</Text>
+            <IdCard size={16} color={colors.textSecondary} />
+            <Text style={[styles.rowText, { color: colors.textSecondary }]}>
+              {tenant.id_number}
+            </Text>
           </View>
 
           {tenant.emergency_contact && (
             <View style={styles.row}>
-              <Phone size={16} color="#6b7280" />
-              <Text style={styles.rowText}>{tenant.emergency_contact}</Text>
+              <Phone size={16} color={colors.textSecondary} />
+              <Text style={[styles.rowText, { color: colors.textSecondary }]}>
+                {tenant.emergency_contact}
+              </Text>
             </View>
           )}
 
           <View style={styles.row}>
-            <DollarSign size={16} color="#6b7280" />
-            <Text style={styles.rowText}>
+            <DollarSign size={16} color={colors.textSecondary} />
+            <Text style={[styles.rowText, { color: colors.textSecondary }]}>
               Deposit: ${Number(tenant.deposit_amount).toFixed(2)}
             </Text>
           </View>
 
           {(tenant.lease_start_date || tenant.lease_end_date) && (
             <View style={styles.row}>
-              <Calendar size={16} color="#6b7280" />
-              <Text style={styles.rowText}>
+              <Calendar size={16} color={colors.textSecondary} />
+              <Text style={[styles.rowText, { color: colors.textSecondary }]}>
                 Lease:{' '}
                 {tenant.lease_start_date
                   ? new Date(tenant.lease_start_date).toLocaleDateString()
@@ -233,6 +277,7 @@ export default function TenantDetailScreen() {
           <TouchableOpacity
             style={[
               styles.endTenancyButton,
+              { backgroundColor: colors.card, borderColor: colors.border },
               isEndingTenancy && styles.buttonDisabled,
             ]}
             onPress={handleEndTenancy}

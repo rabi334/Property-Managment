@@ -16,6 +16,7 @@ import { propertyService } from '@/services/property.service';
 import { unitService } from '@/services/unit.service';
 import { useAuthStore } from '@/stores/authStore';
 import { usePropertyStore } from '@/stores/propertyStore';
+import { useTheme } from '@/hooks/useTheme';
 import {
   ArrowLeft,
   CreditCard as Edit,
@@ -29,6 +30,7 @@ export default function PropertyDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
   const { deleteProperty } = usePropertyStore();
   const [property, setProperty] = useState<any>(null);
   const [units, setUnits] = useState<any[]>([]);
@@ -87,33 +89,52 @@ export default function PropertyDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   if (!property) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Property not found</Text>
+      <View
+        style={[
+          styles.errorContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+          Property not found
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Property Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Property Details
+        </Text>
         <View style={styles.headerActions}>
           {canManage && (
             <TouchableOpacity
               onPress={() => router.push(`/properties/edit/${id}`)}
             >
-              <Edit size={20} color="#2563eb" />
+              <Edit size={20} color={colors.accent} />
             </TouchableOpacity>
           )}
           {canDelete && (
@@ -133,69 +154,124 @@ export default function PropertyDetailScreen() {
           />
         ) : null}
 
-        <View style={styles.infoCard}>
-          <Text style={styles.propertyName}>{property.name}</Text>
+        <View
+          style={[
+            styles.infoCard,
+            { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
+          ]}
+        >
+          <Text style={[styles.propertyName, { color: colors.textPrimary }]}>
+            {property.name}
+          </Text>
           <View style={styles.infoRow}>
-            <MapPin size={16} color="#6b7280" />
-            <Text style={styles.infoText}>{property.address}</Text>
+            <MapPin size={16} color={colors.textSecondary} />
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+              {property.address}
+            </Text>
           </View>
           <View style={styles.tagContainer}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{property.type}</Text>
+            <View
+              style={[
+                styles.tag,
+                { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 },
+              ]}
+            >
+              <Text style={[styles.tagText, { color: colors.textSecondary }]}>
+                {property.type}
+              </Text>
             </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Tax: {property.tax_rate}%</Text>
+            <View
+              style={[
+                styles.tag,
+                { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 },
+              ]}
+            >
+              <Text style={[styles.tagText, { color: colors.textSecondary }]}>
+                Tax: {property.tax_rate}%
+              </Text>
             </View>
           </View>
           {property.description && (
-            <Text style={styles.description}>{property.description}</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>
+              {property.description}
+            </Text>
           )}
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Units ({units.length})</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Units ({units.length})
+            </Text>
             {canManage && (
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => router.push(`/units/create?propertyId=${id}`)}
               >
-                <Plus size={16} color="#2563eb" />
-                <Text style={styles.addButtonText}>Add Unit</Text>
+                <Plus size={16} color={colors.accent} />
+                <Text style={[styles.addButtonText, { color: colors.accent }]}>
+                  Add Unit
+                </Text>
               </TouchableOpacity>
             )}
           </View>
 
           {units.length === 0 ? (
             <View style={styles.emptyState}>
-              <Home size={48} color="#d1d5db" />
-              <Text style={styles.emptyText}>No units added yet</Text>
+              <Home size={48} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No units added yet
+              </Text>
             </View>
           ) : (
-            units.map((unit) => (
-              <TouchableOpacity
-                key={unit.id}
-                style={styles.unitCard}
-                onPress={() => router.push(`/units/${unit.id}`)}
-              >
-                <View style={styles.unitInfo}>
-                  <Text style={styles.unitName}>{unit.unit_name}</Text>
-                  <Text style={styles.unitRent}>
-                    ${unit.rent_amount} / {unit.rent_type}
-                  </Text>
-                </View>
-                <View
+            units.map((unit) => {
+              const isOccupied = unit.status === 'occupied';
+              const isMaintenance = unit.status === 'maintenance';
+              const badgeBg = isOccupied
+                ? colors.currentBg
+                : isMaintenance
+                  ? colors.overdueBg
+                  : colors.background;
+              const badgeTextColor = isOccupied
+                ? colors.currentText
+                : isMaintenance
+                  ? colors.overdueText
+                  : colors.textSecondary;
+
+              return (
+                <TouchableOpacity
+                  key={unit.id}
                   style={[
-                    styles.statusBadge,
-                    unit.status === 'occupied' && styles.statusOccupied,
-                    unit.status === 'vacant' && styles.statusVacant,
-                    unit.status === 'maintenance' && styles.statusMaintenance,
+                    styles.unitCard,
+                    { backgroundColor: colors.card, borderColor: colors.border },
                   ]}
+                  onPress={() => router.push(`/units/${unit.id}`)}
                 >
-                  <Text style={styles.statusText}>{unit.status}</Text>
-                </View>
-              </TouchableOpacity>
-            ))
+                  <View style={styles.unitInfo}>
+                    <Text
+                      style={[styles.unitName, { color: colors.textPrimary }]}
+                    >
+                      {unit.unit_name}
+                    </Text>
+                    <Text
+                      style={[styles.unitRent, { color: colors.textSecondary }]}
+                    >
+                      ${unit.rent_amount} / {unit.rent_type}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: badgeBg },
+                    ]}
+                  >
+                    <Text style={[styles.statusText, { color: badgeTextColor }]}>
+                      {unit.status}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
       </ScrollView>

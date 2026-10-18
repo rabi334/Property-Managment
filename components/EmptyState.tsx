@@ -1,5 +1,6 @@
 import type React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
 
 interface EmptyStateProps {
   icon: React.ComponentType<{ size?: number; color?: string }>;
@@ -16,13 +17,22 @@ export function EmptyState({
   actionText,
   onAction,
 }: EmptyStateProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
-      <Icon size={64} color="#d1d5db" />
-      <Text style={styles.title}>{title}</Text>
-      {description && <Text style={styles.description}>{description}</Text>}
+      <Icon size={64} color={colors.border} />
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+      {description && (
+        <Text style={[styles.description, { color: colors.textSecondary }]}>
+          {description}
+        </Text>
+      )}
       {actionText && onAction && (
-        <TouchableOpacity style={styles.button} onPress={onAction}>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: colors.accent }]}
+          onPress={onAction}
+        >
           <Text style={styles.buttonText}>{actionText}</Text>
         </TouchableOpacity>
       )}
@@ -40,17 +50,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
     marginTop: 16,
   },
   description: {
     fontSize: 14,
-    color: '#6b7280',
     marginTop: 8,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#2563eb',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

@@ -30,6 +30,9 @@ export default function FinancesScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [totalPayments, setTotalPayments] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -43,6 +46,12 @@ export default function FinancesScreen() {
       ]);
       setPayments(paymentsData.slice(0, 10));
       setExpenses(expensesData.slice(0, 10));
+      setTotalPayments(
+        paymentsData.reduce((sum, p) => sum + Number(p.amount), 0),
+      );
+      setTotalExpenses(
+        expensesData.reduce((sum, e) => sum + Number(e.amount), 0),
+      );
     } catch (error) {
       console.error(error);
     } finally {
@@ -56,8 +65,6 @@ export default function FinancesScreen() {
     setRefreshing(false);
   };
 
-  const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const canManage = user?.role === 'OWNER' || user?.role === 'MANAGER';
 
   if (isLoading) {
@@ -111,7 +118,7 @@ export default function FinancesScreen() {
             <Text
               style={[styles.summaryLabel, { color: colors.textSecondary }]}
             >
-              Recent income
+              Total income (all time)
             </Text>
           </View>
           <View
@@ -124,7 +131,7 @@ export default function FinancesScreen() {
             <Text
               style={[styles.summaryLabel, { color: colors.textSecondary }]}
             >
-              Recent expenses
+              Total expenses (all time)
             </Text>
           </View>
         </View>

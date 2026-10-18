@@ -16,6 +16,7 @@ import { PaymentMethod } from '@/types/database';
 import { paymentService } from '@/services/payment.service';
 import { tenantService } from '@/services/tenant.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import DatePickerInput from '@/components/DatePickerInput';
 import { ArrowLeft, ChevronDown, User, Search, X } from 'lucide-react-native';
 
@@ -25,6 +26,7 @@ export default function CreatePaymentScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ tenantId?: string; unitId?: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [tenant, setTenant] = useState<any | null>(null);
   const [isTenantLoading, setIsTenantLoading] = useState(false);
@@ -156,25 +158,25 @@ export default function CreatePaymentScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Record Payment</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Record Payment</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tenant *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Tenant *</Text>
           {isTenantLoading || isTenantsLoading ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color="#2563eb" />
+              <ActivityIndicator size="small" color={colors.accent} />
             </View>
           ) : tenant ? (
             <TouchableOpacity
-              style={styles.tenantCard}
+              style={[styles.tenantCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() =>
                 !params.tenantId &&
                 !params.unitId &&
@@ -183,17 +185,17 @@ export default function CreatePaymentScreen() {
               activeOpacity={params.tenantId || params.unitId ? 1 : 0.7}
             >
               <View style={styles.tenantCardLeft}>
-                <View style={styles.tenantIconCircle}>
-                  <User size={18} color="#2563eb" />
+                <View style={[styles.tenantIconCircle, { backgroundColor: colors.background }]}>
+                  <User size={18} color={colors.accent} />
                 </View>
                 <View>
-                  <Text style={styles.tenantCardTitle}>{tenant.full_name}</Text>
-                  <Text style={styles.tenantCardSub}>
+                  <Text style={[styles.tenantCardTitle, { color: colors.textPrimary }]}>{tenant.full_name}</Text>
+                  <Text style={[styles.tenantCardSub, { color: colors.textSecondary }]}>
                     {tenant.unit?.unit_name ?? ''} •{' '}
                     {tenant.unit?.property?.name ?? ''}
                   </Text>
                   {tenant.unit?.rent_amount != null && (
-                    <Text style={styles.tenantCardSub}>
+                    <Text style={[styles.tenantCardSub, { color: colors.textSecondary }]}>
                       Rent: ${Number(tenant.unit.rent_amount).toFixed(2)} /{' '}
                       {tenant.unit.rent_type}
                     </Text>
@@ -201,26 +203,27 @@ export default function CreatePaymentScreen() {
                 </View>
               </View>
               {!params.tenantId && !params.unitId && (
-                <ChevronDown size={18} color="#6b7280" />
+                <ChevronDown size={18} color={colors.textSecondary} />
               )}
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={styles.tenantPickerBtn}
+              style={[styles.tenantPickerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => setTenantPickerVisible(true)}
             >
-              <User size={18} color="#6b7280" />
-              <Text style={styles.tenantPickerBtnText}>Select a tenant</Text>
-              <ChevronDown size={18} color="#6b7280" />
+              <User size={18} color={colors.textSecondary} />
+              <Text style={[styles.tenantPickerBtnText, { color: colors.textSecondary }]}>Select a tenant</Text>
+              <ChevronDown size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Amount *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Amount *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="Enter amount"
+            placeholderTextColor={colors.textSecondary}
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
@@ -228,7 +231,7 @@ export default function CreatePaymentScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Payment Date *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Payment Date *</Text>
           <DatePickerInput
             value={paymentDate}
             onChange={setPaymentDate}
@@ -237,32 +240,42 @@ export default function CreatePaymentScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Payment Method *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Payment Method *</Text>
           <View style={styles.chipGroup}>
-            {PAYMENT_METHODS.map((m) => (
-              <TouchableOpacity
-                key={m}
-                style={[styles.chip, method === m && styles.chipSelected]}
-                onPress={() => setMethod(m)}
-              >
-                <Text
+            {PAYMENT_METHODS.map((m) => {
+              const isSelected = method === m;
+              return (
+                <TouchableOpacity
+                  key={m}
                   style={[
-                    styles.chipText,
-                    method === m && styles.chipTextSelected,
+                    styles.chip,
+                    {
+                      backgroundColor: isSelected ? colors.accent : colors.card,
+                      borderColor: isSelected ? colors.accent : colors.border,
+                    },
                   ]}
+                  onPress={() => setMethod(m)}
                 >
-                  {m.charAt(0).toUpperCase() + m.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.chipText,
+                      { color: isSelected ? '#fff' : colors.textSecondary },
+                    ]}
+                  >
+                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Notes</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Notes</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="Optional notes about this payment"
+            placeholderTextColor={colors.textSecondary}
             value={notes}
             onChangeText={setNotes}
             multiline
@@ -271,7 +284,7 @@ export default function CreatePaymentScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.buttonDisabled]}
+          style={[styles.submitButton, { backgroundColor: colors.accent }, isLoading && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={isLoading}
         >
@@ -294,19 +307,20 @@ export default function CreatePaymentScreen() {
             style={styles.modalBg}
             onPress={() => setTenantPickerVisible(false)}
           />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Tenant</Text>
+          <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Tenant</Text>
               <TouchableOpacity onPress={() => setTenantPickerVisible(false)}>
-                <X size={22} color="#6b7280" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.searchRow}>
-              <Search size={16} color="#9ca3af" />
+            <View style={[styles.searchRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Search size={16} color={colors.textSecondary} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: colors.textPrimary }]}
                 placeholder="Search by tenant, unit, or property…"
+                placeholderTextColor={colors.textSecondary}
                 value={tenantSearch}
                 onChangeText={setTenantSearch}
                 autoCapitalize="none"
@@ -320,15 +334,15 @@ export default function CreatePaymentScreen() {
               keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={styles.tenantListItem}
+                  style={[styles.tenantListItem, { borderBottomColor: colors.border }]}
                   onPress={() => handleSelectTenant(item)}
                 >
-                  <View style={styles.tenantListIconCircle}>
-                    <User size={18} color="#2563eb" />
+                  <View style={[styles.tenantListIconCircle, { backgroundColor: colors.background }]}>
+                    <User size={18} color={colors.accent} />
                   </View>
                   <View style={styles.tenantListInfo}>
-                    <Text style={styles.tenantListName}>{item.full_name}</Text>
-                    <Text style={styles.tenantListSub}>
+                    <Text style={[styles.tenantListName, { color: colors.textPrimary }]}>{item.full_name}</Text>
+                    <Text style={[styles.tenantListSub, { color: colors.textSecondary }]}>
                       {item.unit?.unit_name ?? ''} •{' '}
                       {item.unit?.property?.name ?? ''}
                     </Text>
@@ -337,7 +351,7 @@ export default function CreatePaymentScreen() {
               )}
               ListEmptyComponent={
                 <View style={styles.emptyList}>
-                  <Text style={styles.emptyListText}>
+                  <Text style={[styles.emptyListText, { color: colors.textSecondary }]}>
                     No active tenants found
                   </Text>
                 </View>

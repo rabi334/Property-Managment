@@ -29,30 +29,34 @@ router.get('/stats', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid propertyId' });
     }
 
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
-    const startDate =
-      from || `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-    const endDate =
-      to || new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
-
     const propertyWhere = propertyId ? { id: propertyId } : {};
     const unitWhere = propertyId ? { propertyId } : {};
-    const paymentWhere: any = {
-      paymentDate: {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      },
-    };
-    if (propertyId) paymentWhere.unit = { propertyId };
-    const expenseWhere: any = {
-      date: {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      },
-    };
-    if (propertyId) expenseWhere.propertyId = propertyId;
+    const paymentWhere: any = {};
+    const expenseWhere: any = {};
+
+    if (propertyId) {
+      paymentWhere.unit = { propertyId };
+      expenseWhere.propertyId = propertyId;
+    }
+
+    if (from || to) {
+      paymentWhere.paymentDate = {};
+      expenseWhere.date = {};
+      if (from) {
+        const startDate = new Date(
+          from.includes('T') ? from : `${from}T00:00:00.000Z`,
+        );
+        paymentWhere.paymentDate.gte = startDate;
+        expenseWhere.date.gte = startDate;
+      }
+      if (to) {
+        const endDate = new Date(
+          to.includes('T') ? to : `${to}T23:59:59.999Z`,
+        );
+        paymentWhere.paymentDate.lte = endDate;
+        expenseWhere.date.lte = endDate;
+      }
+    }
 
     const [properties, units, payments, expenses] = await Promise.all([
       prisma.property.findMany({
@@ -103,6 +107,8 @@ router.get('/stats', async (req: Request, res: Response) => {
       maintenanceUnits,
       monthlyIncome,
       monthlyExpenses,
+      income: monthlyIncome,
+      expenses: monthlyExpenses,
       netProfit,
       taxPayable,
     });
@@ -140,8 +146,8 @@ router.get(
             where: {
               ...(propertyId ? { unit: { propertyId } } : {}),
               paymentDate: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
+                gte: new Date(`${startDate}T00:00:00.000Z`),
+                lte: new Date(`${endDate}T23:59:59.999Z`),
               },
             },
             select: { amount: true },
@@ -150,8 +156,8 @@ router.get(
             where: {
               ...(propertyId ? { propertyId } : {}),
               date: {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
+                gte: new Date(`${startDate}T00:00:00.000Z`),
+                lte: new Date(`${endDate}T23:59:59.999Z`),
               },
             },
             select: { amount: true },
@@ -221,8 +227,8 @@ router.get(
               where: {
                 unitId: { in: unitIds },
                 paymentDate: {
-                  gte: new Date(startDate),
-                  lte: new Date(endDate),
+                  gte: new Date(`${startDate}T00:00:00.000Z`),
+                  lte: new Date(`${endDate}T23:59:59.999Z`),
                 },
               },
               select: { amount: true },

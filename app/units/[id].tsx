@@ -15,6 +15,7 @@ import { tenantService } from '@/services/tenant.service';
 import { paymentService } from '@/services/payment.service';
 import { maintenanceService } from '@/services/maintenance.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import {
   ArrowLeft,
   Edit3,
@@ -28,6 +29,7 @@ export default function UnitDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [unit, setUnit] = useState<any>(null);
   const [tenant, setTenant] = useState<any | null>(null);
@@ -97,31 +99,63 @@ export default function UnitDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   if (!unit) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Unit not found</Text>
+      <View
+        style={[
+          styles.errorContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+          Unit not found
+        </Text>
       </View>
     );
   }
 
+  const isOccupied = unit.status === 'occupied';
+  const isMaintenance = unit.status === 'maintenance';
+  const statusBadgeBg = isOccupied
+    ? colors.currentBg
+    : isMaintenance
+      ? colors.overdueBg
+      : colors.background;
+  const statusBadgeColor = isOccupied
+    ? colors.currentText
+    : isMaintenance
+      ? colors.overdueText
+      : colors.textSecondary;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Unit Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Unit Details
+        </Text>
         <View style={styles.headerActions}>
           {canManage && (
             <TouchableOpacity onPress={() => router.push(`/units/edit/${id}`)}>
-              <Edit3 size={20} color="#2563eb" />
+              <Edit3 size={20} color={colors.accent} />
             </TouchableOpacity>
           )}
           {canDelete && (
@@ -133,32 +167,54 @@ export default function UnitDetailScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.infoCard}>
-          <Text style={styles.unitName}>{unit.unit_name}</Text>
-          <Text style={styles.propertyName}>{unit.property?.name}</Text>
+        <View
+          style={[
+            styles.infoCard,
+            { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 },
+          ]}
+        >
+          <Text style={[styles.unitName, { color: colors.textPrimary }]}>
+            {unit.unit_name}
+          </Text>
+          <Text style={[styles.propertyName, { color: colors.textSecondary }]}>
+            {unit.property?.name}
+          </Text>
 
           <View style={styles.chipRow}>
-            <View style={styles.chip}>
-              <Text style={styles.chipText}>
+            <View
+              style={[
+                styles.chip,
+                { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: colors.textSecondary }]}>
                 {unit.rent_type.charAt(0).toUpperCase() +
                   unit.rent_type.slice(1)}{' '}
                 rent
               </Text>
             </View>
-            <View style={styles.chip}>
-              <Text style={styles.chipText}>
+            <View
+              style={[
+                styles.chip,
+                { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: colors.textSecondary }]}>
                 ${Number(unit.rent_amount).toFixed(2)}
               </Text>
             </View>
             <View
               style={[
                 styles.chip,
-                unit.status === 'occupied' && styles.chipOccupied,
-                unit.status === 'vacant' && styles.chipVacant,
-                unit.status === 'maintenance' && styles.chipMaintenance,
+                { backgroundColor: statusBadgeBg },
               ]}
             >
-              <Text style={styles.chipText}>
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: statusBadgeColor, fontWeight: '600' },
+                ]}
+              >
                 {unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}
               </Text>
             </View>
@@ -167,7 +223,9 @@ export default function UnitDetailScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Tenant</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Tenant
+            </Text>
             {canManage && (
               <TouchableOpacity
                 onPress={() =>
@@ -178,7 +236,7 @@ export default function UnitDetailScreen() {
                   )
                 }
               >
-                <Text style={styles.linkText}>
+                <Text style={[styles.linkText, { color: colors.accent }]}>
                   {tenant ? 'View Tenant' : 'Add Tenant'}
                 </Text>
               </TouchableOpacity>
@@ -187,20 +245,36 @@ export default function UnitDetailScreen() {
 
           {!tenant ? (
             <View style={styles.emptyRow}>
-              <User size={32} color="#d1d5db" />
-              <Text style={styles.emptyText}>No tenant assigned</Text>
+              <User size={32} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No tenant assigned
+              </Text>
             </View>
           ) : (
             <TouchableOpacity
-              style={styles.rowCard}
+              style={[
+                styles.rowCard,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
               onPress={() => router.push(`/tenants/${tenant.id}`)}
             >
-              <View style={styles.iconCircle}>
-                <User size={20} color="#2563eb" />
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: colors.currentBg },
+                ]}
+              >
+                <User size={20} color={colors.currentText} />
               </View>
               <View style={styles.rowInfo}>
-                <Text style={styles.rowTitle}>{tenant.full_name}</Text>
-                <Text style={styles.rowSubtitle}>{tenant.phone}</Text>
+                <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
+                  {tenant.full_name}
+                </Text>
+                <Text
+                  style={[styles.rowSubtitle, { color: colors.textSecondary }]}
+                >
+                  {tenant.phone}
+                </Text>
               </View>
             </TouchableOpacity>
           )}
@@ -208,32 +282,56 @@ export default function UnitDetailScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Payments</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Recent Payments
+            </Text>
             {canManage && (
               <TouchableOpacity
                 onPress={() => router.push(`/payments/create?unitId=${id}`)}
               >
-                <Text style={styles.linkText}>Record Payment</Text>
+                <Text style={[styles.linkText, { color: colors.accent }]}>
+                  Record Payment
+                </Text>
               </TouchableOpacity>
             )}
           </View>
 
           {payments.length === 0 ? (
             <View style={styles.emptyRow}>
-              <DollarSign size={32} color="#d1d5db" />
-              <Text style={styles.emptyText}>No payments recorded</Text>
+              <DollarSign size={32} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No payments recorded
+              </Text>
             </View>
           ) : (
             payments.slice(0, 5).map((payment) => (
-              <View key={payment.id} style={styles.rowCard}>
-                <View style={styles.iconCircle}>
-                  <DollarSign size={20} color="#10b981" />
+              <View
+                key={payment.id}
+                style={[
+                  styles.rowCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.iconCircle,
+                    { backgroundColor: colors.currentBg },
+                  ]}
+                >
+                  <DollarSign size={20} color={colors.currentText} />
                 </View>
                 <View style={styles.rowInfo}>
-                  <Text style={styles.rowTitle}>
+                  <Text
+                    style={[styles.rowTitle, { color: colors.textPrimary }]}
+                  >
                     ${Number(payment.amount).toFixed(2)}
                   </Text>
-                  <Text style={styles.rowSubtitle}>
+                  <Text
+                    style={[
+                      styles.rowSubtitle,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
                     {new Date(payment.payment_date).toLocaleDateString()}
                   </Text>
                 </View>
@@ -244,34 +342,59 @@ export default function UnitDetailScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Maintenance</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Maintenance
+            </Text>
             {canManage && (
               <TouchableOpacity
                 onPress={() => router.push(`/maintenance/create?unitId=${id}`)}
               >
-                <Text style={styles.linkText}>New Request</Text>
+                <Text style={[styles.linkText, { color: colors.accent }]}>
+                  New Request
+                </Text>
               </TouchableOpacity>
             )}
           </View>
 
           {maintenanceRequests.length === 0 ? (
             <View style={styles.emptyRow}>
-              <Wrench size={32} color="#d1d5db" />
-              <Text style={styles.emptyText}>No maintenance requests</Text>
+              <Wrench size={32} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No maintenance requests
+              </Text>
             </View>
           ) : (
             maintenanceRequests.slice(0, 5).map((request) => (
               <TouchableOpacity
                 key={request.id}
-                style={styles.rowCard}
+                style={[
+                  styles.rowCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
                 onPress={() => router.push(`/maintenance/${request.id}`)}
               >
-                <View style={styles.iconCircle}>
-                  <Wrench size={20} color="#f59e0b" />
+                <View
+                  style={[
+                    styles.iconCircle,
+                    { backgroundColor: colors.overdueBg },
+                  ]}
+                >
+                  <Wrench size={20} color={colors.overdueText} />
                 </View>
                 <View style={styles.rowInfo}>
-                  <Text style={styles.rowTitle}>{request.title}</Text>
-                  <Text style={styles.rowSubtitle}>{request.status}</Text>
+                  <Text
+                    style={[styles.rowTitle, { color: colors.textPrimary }]}
+                  >
+                    {request.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.rowSubtitle,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {request.status}
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))

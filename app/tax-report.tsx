@@ -9,8 +9,10 @@ import {
 } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { dashboardService } from '@/services/dashboard.service';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function TaxReportScreen() {
+  const { colors } = useTheme();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [rows, setRows] = useState<any[]>([]);
@@ -43,24 +45,38 @@ export default function TaxReportScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Tax Report</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Tax Report
+        </Text>
         <View style={styles.yearSelector}>
           <TouchableOpacity
             style={styles.yearBtn}
             onPress={() => setYear((y) => y - 1)}
           >
-            <ChevronLeft size={20} color="#2563eb" />
+            <ChevronLeft size={20} color={colors.accent} />
           </TouchableOpacity>
-          <Text style={styles.yearText}>{year}</Text>
+          <Text style={[styles.yearText, { color: colors.textPrimary }]}>
+            {year}
+          </Text>
           <TouchableOpacity
             style={styles.yearBtn}
             onPress={() => setYear((y) => Math.min(y + 1, currentYear))}
@@ -68,39 +84,74 @@ export default function TaxReportScreen() {
           >
             <ChevronRight
               size={20}
-              color={year >= currentYear ? '#d1d5db' : '#2563eb'}
+              color={year >= currentYear ? colors.border : colors.accent}
             />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Summary</Text>
+        <View
+          style={[
+            styles.summaryCard,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>
+            Summary
+          </Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Income</Text>
-            <Text style={styles.summaryValue}>${totals.income.toFixed(2)}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
+              Total Income
+            </Text>
+            <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
+              ${totals.income.toFixed(2)}
+            </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Tax Payable</Text>
-            <Text style={styles.summaryValue}>${totals.tax.toFixed(2)}</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
+              Total Tax Payable
+            </Text>
+            <Text style={[styles.summaryValue, { color: colors.accent }]}>
+              ${totals.tax.toFixed(2)}
+            </Text>
           </View>
         </View>
 
         {rows.map((row) => (
-          <View key={row.propertyId} style={styles.rowCard}>
-            <Text style={styles.propertyName}>{row.propertyName}</Text>
+          <View
+            key={row.propertyId}
+            style={[
+              styles.rowCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.propertyName, { color: colors.textPrimary }]}>
+              {row.propertyName}
+            </Text>
             <View style={styles.row}>
-              <Text style={styles.label}>Tax Rate</Text>
-              <Text style={styles.value}>{row.taxRate}%</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Tax Rate
+              </Text>
+              <Text style={[styles.value, { color: colors.textPrimary }]}>
+                {row.taxRate}%
+              </Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Total Income</Text>
-              <Text style={styles.value}>${row.totalIncome.toFixed(2)}</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Total Income
+              </Text>
+              <Text style={[styles.value, { color: colors.textPrimary }]}>
+                ${row.totalIncome.toFixed(2)}
+              </Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Tax Payable</Text>
-              <Text style={styles.value}>${row.taxPayable.toFixed(2)}</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Tax Payable
+              </Text>
+              <Text style={[styles.value, { color: colors.accent }]}>
+                ${row.taxPayable.toFixed(2)}
+              </Text>
             </View>
           </View>
         ))}
@@ -112,7 +163,6 @@ export default function TaxReportScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
   },
   loadingContainer: {
     flex: 1,

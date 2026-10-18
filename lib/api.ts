@@ -1,9 +1,29 @@
+import { Platform } from 'react-native';
+
 /**
  * API client for Property Manager backend.
- * Uses EXPO_PUBLIC_API_URL (default: http://localhost:3001) for the base URL.
+ * Uses EXPO_PUBLIC_API_URL with automatic fallback for web browsers.
  */
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+export function getBaseUrl(): string {
+  // If an explicit API URL is configured (e.g. production cloud URL or mobile env), always prioritize it:
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+
+  // Fallback for local web development: match browser host on port 3001
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+    const { hostname } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3001';
+    }
+    if (hostname) {
+      return `http://${hostname}:3001`;
+    }
+  }
+
+  return 'http://localhost:3001';
+}
 
 let getToken: (() => string | null) | null = null;
 
@@ -15,7 +35,8 @@ export async function api<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const url = `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   const token = getToken?.() ?? null;
 
   const headers: Record<string, string> = {

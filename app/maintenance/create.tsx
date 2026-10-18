@@ -16,6 +16,7 @@ import { maintenanceService } from '@/services/maintenance.service';
 import { unitService } from '@/services/unit.service';
 import { MaintenanceStatus } from '@/types/database';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import {
   ArrowLeft,
   Building2,
@@ -31,6 +32,7 @@ export default function CreateMaintenanceScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ unitId?: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   // Pre-loaded unit (when unitId param passed)
   const [unit, setUnit] = useState<any | null>(null);
@@ -133,60 +135,61 @@ export default function CreateMaintenanceScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Maintenance Request</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>New Maintenance Request</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
         {/* Unit selector */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Unit *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Unit *</Text>
           {isUnitLoading || isUnitsLoading ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color="#2563eb" />
+              <ActivityIndicator size="small" color={colors.accent} />
             </View>
           ) : unit ? (
             <TouchableOpacity
-              style={styles.unitCard}
+              style={[styles.unitCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => !params.unitId && setUnitPickerVisible(true)}
               activeOpacity={params.unitId ? 1 : 0.7}
             >
               <View style={styles.unitCardLeft}>
-                <View style={styles.unitIconCircle}>
-                  <Home size={18} color="#2563eb" />
+                <View style={[styles.unitIconCircle, { backgroundColor: colors.background }]}>
+                  <Home size={18} color={colors.accent} />
                 </View>
                 <View>
-                  <Text style={styles.unitCardTitle}>{unit.unit_name}</Text>
-                  <Text style={styles.unitCardSub}>
+                  <Text style={[styles.unitCardTitle, { color: colors.textPrimary }]}>{unit.unit_name}</Text>
+                  <Text style={[styles.unitCardSub, { color: colors.textSecondary }]}>
                     {unit.property?.name ?? ''}
                   </Text>
                 </View>
               </View>
-              {!params.unitId && <ChevronDown size={18} color="#6b7280" />}
+              {!params.unitId && <ChevronDown size={18} color={colors.textSecondary} />}
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={styles.unitPickerBtn}
+              style={[styles.unitPickerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => setUnitPickerVisible(true)}
             >
-              <Building2 size={18} color="#6b7280" />
-              <Text style={styles.unitPickerBtnText}>Select a unit</Text>
-              <ChevronDown size={18} color="#6b7280" />
+              <Building2 size={18} color={colors.textSecondary} />
+              <Text style={[styles.unitPickerBtnText, { color: colors.textSecondary }]}>Select a unit</Text>
+              <ChevronDown size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Title */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Title *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Title *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="Short summary of the issue"
+            placeholderTextColor={colors.textSecondary}
             value={title}
             onChangeText={setTitle}
           />
@@ -194,10 +197,11 @@ export default function CreateMaintenanceScreen() {
 
         {/* Description */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Description *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Description *</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="Describe the problem in detail"
+            placeholderTextColor={colors.textSecondary}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -207,30 +211,39 @@ export default function CreateMaintenanceScreen() {
 
         {/* Status */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Initial Status *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Initial Status *</Text>
           <View style={styles.chipGroup}>
-            {STATUSES.map((s) => (
-              <TouchableOpacity
-                key={s}
-                style={[styles.chip, status === s && styles.chipSelected]}
-                onPress={() => setStatus(s)}
-              >
-                <Text
+            {STATUSES.map((s) => {
+              const isSelected = status === s;
+              return (
+                <TouchableOpacity
+                  key={s}
                   style={[
-                    styles.chipText,
-                    status === s && styles.chipTextSelected,
+                    styles.chip,
+                    {
+                      backgroundColor: isSelected ? colors.accent : colors.card,
+                      borderColor: isSelected ? colors.accent : colors.border,
+                    },
                   ]}
+                  onPress={() => setStatus(s)}
                 >
-                  {s.replace('_', ' ').charAt(0).toUpperCase() +
-                    s.replace('_', ' ').slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.chipText,
+                      { color: isSelected ? '#fff' : colors.textSecondary },
+                    ]}
+                  >
+                    {s.replace('_', ' ').charAt(0).toUpperCase() +
+                      s.replace('_', ' ').slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.buttonDisabled]}
+          style={[styles.submitButton, { backgroundColor: colors.accent }, isLoading && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={isLoading}
         >
@@ -254,20 +267,21 @@ export default function CreateMaintenanceScreen() {
             style={styles.modalBg}
             onPress={() => setUnitPickerVisible(false)}
           />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Unit</Text>
+          <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Unit</Text>
               <TouchableOpacity onPress={() => setUnitPickerVisible(false)}>
-                <X size={22} color="#6b7280" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             {/* Search */}
-            <View style={styles.searchRow}>
-              <Search size={16} color="#9ca3af" />
+            <View style={[styles.searchRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Search size={16} color={colors.textSecondary} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: colors.textPrimary }]}
                 placeholder="Search by unit or property name…"
+                placeholderTextColor={colors.textSecondary}
                 value={unitSearch}
                 onChangeText={setUnitSearch}
                 autoCapitalize="none"
@@ -279,35 +293,49 @@ export default function CreateMaintenanceScreen() {
               keyExtractor={(item) => item.id}
               style={styles.unitList}
               keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.unitListItem}
-                  onPress={() => handleSelectUnit(item)}
-                >
-                  <View style={styles.unitListIconCircle}>
-                    <Home size={18} color="#2563eb" />
-                  </View>
-                  <View style={styles.unitListInfo}>
-                    <Text style={styles.unitListName}>{item.unit_name}</Text>
-                    <Text style={styles.unitListSub}>
-                      {item.property?.name ?? ''}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      item.status === 'occupied' && styles.statusOccupied,
-                      item.status === 'vacant' && styles.statusVacant,
-                      item.status === 'maintenance' && styles.statusMaintenance,
-                    ]}
+              renderItem={({ item }) => {
+                const isOccupied = item.status === 'occupied';
+                const isVacant = item.status === 'vacant';
+                const isMaint = item.status === 'maintenance';
+                return (
+                  <TouchableOpacity
+                    style={[styles.unitListItem, { borderBottomColor: colors.border }]}
+                    onPress={() => handleSelectUnit(item)}
                   >
-                    <Text style={styles.statusBadgeText}>{item.status}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
+                    <View style={[styles.unitListIconCircle, { backgroundColor: colors.background }]}>
+                      <Home size={18} color={colors.accent} />
+                    </View>
+                    <View style={styles.unitListInfo}>
+                      <Text style={[styles.unitListName, { color: colors.textPrimary }]}>{item.unit_name}</Text>
+                      <Text style={[styles.unitListSub, { color: colors.textSecondary }]}>
+                        {item.property?.name ?? ''}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        isOccupied && { backgroundColor: colors.currentBg },
+                        isVacant && { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
+                        isMaint && { backgroundColor: colors.overdueBg },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusBadgeText,
+                          isOccupied && { color: colors.currentText },
+                          isVacant && { color: colors.textSecondary },
+                          isMaint && { color: colors.overdueText },
+                        ]}
+                      >
+                        {item.status}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
               ListEmptyComponent={
                 <View style={styles.emptyList}>
-                  <Text style={styles.emptyListText}>No units found</Text>
+                  <Text style={[styles.emptyListText, { color: colors.textSecondary }]}>No units found</Text>
                 </View>
               }
             />

@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { maintenanceService } from '@/services/maintenance.service';
 import { MaintenanceStatus } from '@/types/database';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import { ArrowLeft, Wrench, Trash2 } from 'lucide-react-native';
 
 const STATUSES: MaintenanceStatus[] = ['pending', 'in_progress', 'completed'];
@@ -20,6 +21,7 @@ export default function MaintenanceDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [request, setRequest] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,27 +99,27 @@ export default function MaintenanceDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   if (!request) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Request not found</Text>
+      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Request not found</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Maintenance Request</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Maintenance Request</Text>
         <View style={styles.headerActions}>
           {canDelete && (
             <TouchableOpacity onPress={handleDelete}>
@@ -128,42 +130,48 @@ export default function MaintenanceDetailScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.iconRow}>
-            <View style={styles.iconCircle}>
-              <Wrench size={24} color="#2563eb" />
+            <View style={[styles.iconCircle, { backgroundColor: colors.background }]}>
+              <Wrench size={24} color={colors.accent} />
             </View>
             <View style={styles.iconText}>
-              <Text style={styles.title}>{request.title}</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{request.title}</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                 {request.unit?.unit_name} • {request.unit?.property?.name}
               </Text>
             </View>
           </View>
 
-          <Text style={styles.sectionLabel}>Description</Text>
-          <Text style={styles.description}>{request.description}</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Description</Text>
+          <Text style={[styles.description, { color: colors.textPrimary }]}>{request.description}</Text>
 
-          <Text style={styles.sectionLabel}>Status</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Status</Text>
           <View style={styles.statusRow}>
-            {STATUSES.map((s) => (
-              <TouchableOpacity
-                key={s}
-                style={[
-                  styles.statusChip,
-                  request.status === s && styles.statusChipSelected,
-                ]}
-                disabled={!canManage || isUpdating}
-                onPress={() => handleStatusChange(s)}>
-                <Text
+            {STATUSES.map((s) => {
+              const isSelected = request.status === s;
+              return (
+                <TouchableOpacity
+                  key={s}
                   style={[
-                    styles.statusChipText,
-                    request.status === s && styles.statusChipTextSelected,
-                  ]}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                    styles.statusChip,
+                    {
+                      backgroundColor: isSelected ? colors.accent : colors.card,
+                      borderColor: isSelected ? colors.accent : colors.border,
+                    },
+                  ]}
+                  disabled={!canManage || isUpdating}
+                  onPress={() => handleStatusChange(s)}>
+                  <Text
+                    style={[
+                      styles.statusChipText,
+                      { color: isSelected ? '#fff' : colors.textSecondary },
+                    ]}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </ScrollView>

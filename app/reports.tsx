@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { dashboardService } from '@/services/dashboard.service';
+import { useTheme } from '@/hooks/useTheme';
 import {
   DollarSign,
   TrendingUp,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react-native';
 
 export default function ReportsScreen() {
+  const { colors } = useTheme();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -40,31 +42,45 @@ export default function ReportsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Financial Reports</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Financial Reports
+        </Text>
         <View style={styles.yearSelector}>
           <TouchableOpacity
             style={styles.yearBtn}
             onPress={() => setYear((y) => y - 1)}
           >
-            <ChevronLeft size={20} color="#2563eb" />
+            <ChevronLeft size={20} color={colors.accent} />
           </TouchableOpacity>
-          <Text style={styles.yearText}>{year}</Text>
+          <Text style={[styles.yearText, { color: colors.textPrimary }]}>
+            {year}
+          </Text>
           <TouchableOpacity
             style={styles.yearBtn}
             onPress={() => setYear((y) => Math.min(y + 1, currentYear))}
           >
             <ChevronRight
               size={20}
-              color={year >= currentYear ? '#d1d5db' : '#2563eb'}
+              color={year >= currentYear ? colors.border : colors.accent}
             />
           </TouchableOpacity>
         </View>
@@ -73,46 +89,99 @@ export default function ReportsScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-            <Text style={styles.legendText}>Income</Text>
+            <View
+              style={[
+                styles.legendDot,
+                { backgroundColor: colors.currentText },
+              ]}
+            />
+            <Text
+              style={[styles.legendText, { color: colors.textSecondary }]}
+            >
+              Income
+            </Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#ef4444' }]} />
-            <Text style={styles.legendText}>Expenses</Text>
+            <View
+              style={[
+                styles.legendDot,
+                { backgroundColor: colors.overdueText },
+              ]}
+            />
+            <Text
+              style={[styles.legendText, { color: colors.textSecondary }]}
+            >
+              Expenses
+            </Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#2563eb' }]} />
-            <Text style={styles.legendText}>Profit</Text>
+            <View
+              style={[styles.legendDot, { backgroundColor: colors.accent }]}
+            />
+            <Text
+              style={[styles.legendText, { color: colors.textSecondary }]}
+            >
+              Profit
+            </Text>
           </View>
         </View>
 
         {chartData.map((entry) => (
-          <View key={entry.month} style={styles.rowCard}>
+          <View
+            key={entry.month}
+            style={[
+              styles.rowCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.rowHeader}>
-              <Text style={styles.monthText}>{entry.month}</Text>
+              <Text style={[styles.monthText, { color: colors.textPrimary }]}>
+                {entry.month}
+              </Text>
             </View>
             <View style={styles.metricRow}>
               <View style={styles.metricItem}>
-                <TrendingUp size={18} color="#10b981" />
-                <Text style={styles.metricLabel}>Income</Text>
-                <Text style={[styles.metricValue, styles.incomeText]}>
+                <TrendingUp size={18} color={colors.currentText} />
+                <Text
+                  style={[styles.metricLabel, { color: colors.textSecondary }]}
+                >
+                  Income
+                </Text>
+                <Text
+                  style={[styles.metricValue, { color: colors.currentText }]}
+                >
                   ${entry.income.toFixed(2)}
                 </Text>
               </View>
               <View style={styles.metricItem}>
-                <TrendingDown size={18} color="#ef4444" />
-                <Text style={styles.metricLabel}>Expenses</Text>
-                <Text style={[styles.metricValue, styles.expenseText]}>
+                <TrendingDown size={18} color={colors.overdueText} />
+                <Text
+                  style={[styles.metricLabel, { color: colors.textSecondary }]}
+                >
+                  Expenses
+                </Text>
+                <Text
+                  style={[styles.metricValue, { color: colors.overdueText }]}
+                >
                   ${entry.expenses.toFixed(2)}
                 </Text>
               </View>
               <View style={styles.metricItem}>
-                <DollarSign size={18} color="#2563eb" />
-                <Text style={styles.metricLabel}>Profit</Text>
+                <DollarSign size={18} color={colors.accent} />
+                <Text
+                  style={[styles.metricLabel, { color: colors.textSecondary }]}
+                >
+                  Profit
+                </Text>
                 <Text
                   style={[
                     styles.metricValue,
-                    entry.profit >= 0 ? styles.incomeText : styles.expenseText,
+                    {
+                      color:
+                        entry.profit >= 0
+                          ? colors.currentText
+                          : colors.overdueText,
+                    },
                   ]}
                 >
                   ${entry.profit.toFixed(2)}
@@ -129,7 +198,6 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
   },
   loadingContainer: {
     flex: 1,

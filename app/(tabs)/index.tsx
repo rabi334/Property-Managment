@@ -36,11 +36,15 @@ export default function DashboardScreen() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
     null,
   );
-  const [range, setRange] = useState<'month' | 'year'>('month');
+  type PeriodRange = 'month' | 'year' | 'all';
+  const [range, setRange] = useState<PeriodRange>('month');
   const [expiringLeases, setExpiringLeases] = useState<ExpiringLease[]>([]);
   const [isExpiringLoading, setIsExpiringLoading] = useState(false);
 
-  const dateRange = useMemo(() => {
+  const dateRange = useMemo<{ from?: string; to?: string }>(() => {
+    if (range === 'all') {
+      return {};
+    }
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -255,6 +259,25 @@ export default function DashboardScreen() {
               ]}
             >
               This year
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              {
+                borderColor: colors.border,
+                backgroundColor: range === 'all' ? colors.accent : colors.card,
+              },
+            ]}
+            onPress={() => setRange('all')}
+          >
+            <Text
+              style={[
+                styles.chipText,
+                { color: range === 'all' ? '#fff' : colors.textSecondary },
+              ]}
+            >
+              All time
             </Text>
           </TouchableOpacity>
         </View>
@@ -486,11 +509,15 @@ export default function DashboardScreen() {
             styles.financeCard,
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
-          onPress={() =>
-            router.push(
-              `/payments?from=${dateRange.from}&to=${dateRange.to}${selectedPropertyId ? `&propertyId=${selectedPropertyId}` : ''}`,
-            )
-          }
+          onPress={() => {
+            const queryParts = [
+              dateRange.from ? `from=${dateRange.from}` : null,
+              dateRange.to ? `to=${dateRange.to}` : null,
+              selectedPropertyId ? `propertyId=${selectedPropertyId}` : null,
+            ].filter(Boolean);
+            const qs = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+            router.push(`/payments${qs}` as any);
+          }}
         >
           <View style={styles.financeRow}>
             <View
@@ -505,7 +532,11 @@ export default function DashboardScreen() {
               <Text
                 style={[styles.financeLabel, { color: colors.textSecondary }]}
               >
-                {range === 'month' ? 'Monthly income' : 'Yearly income'}
+                {range === 'month'
+                  ? 'Monthly income'
+                  : range === 'year'
+                    ? 'Yearly income'
+                    : 'Total income'}
               </Text>
               <Text
                 style={[styles.financeValue, { color: colors.currentText }]}
@@ -521,11 +552,15 @@ export default function DashboardScreen() {
             styles.financeCard,
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
-          onPress={() =>
-            router.push(
-              `/expenses?from=${dateRange.from}&to=${dateRange.to}${selectedPropertyId ? `&propertyId=${selectedPropertyId}` : ''}`,
-            )
-          }
+          onPress={() => {
+            const queryParts = [
+              dateRange.from ? `from=${dateRange.from}` : null,
+              dateRange.to ? `to=${dateRange.to}` : null,
+              selectedPropertyId ? `propertyId=${selectedPropertyId}` : null,
+            ].filter(Boolean);
+            const qs = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+            router.push(`/expenses${qs}` as any);
+          }}
         >
           <View style={styles.financeRow}>
             <View
@@ -540,7 +575,11 @@ export default function DashboardScreen() {
               <Text
                 style={[styles.financeLabel, { color: colors.textSecondary }]}
               >
-                {range === 'month' ? 'Monthly expenses' : 'Yearly expenses'}
+                {range === 'month'
+                  ? 'Monthly expenses'
+                  : range === 'year'
+                    ? 'Yearly expenses'
+                    : 'Total expenses'}
               </Text>
               <Text
                 style={[styles.financeValue, { color: colors.overdueText }]}
@@ -614,6 +653,24 @@ export default function DashboardScreen() {
             </View>
           </View>
         </TouchableOpacity>
+
+        {stats && stats.monthlyIncome === 0 && stats.monthlyExpenses === 0 && (
+          <View
+            style={[
+              styles.emptyPeriodBanner,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text
+              style={[
+                styles.emptyPeriodText,
+                { color: colors.textSecondary },
+              ]}
+            >
+              No transactions recorded for {range === 'month' ? 'this month' : range === 'year' ? 'this year' : 'this period'}. Switch period filter above to view historical records.
+            </Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -740,4 +797,17 @@ const styles = StyleSheet.create({
   financeInfo: { marginLeft: 12, flex: 1 },
   financeLabel: { fontSize: 14 },
   financeValue: { fontSize: 20, fontWeight: '600', marginTop: 4 },
+  emptyPeriodBanner: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 4,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  emptyPeriodText: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });

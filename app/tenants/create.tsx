@@ -15,6 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { tenantService } from '@/services/tenant.service';
 import { unitService } from '@/services/unit.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import DatePickerInput from '@/components/DatePickerInput';
 import {
   ArrowLeft,
@@ -29,6 +30,7 @@ export default function CreateTenantScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ unitId?: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   // Pre-loaded unit (when unitId param passed)
   const [unit, setUnit] = useState<any | null>(null);
@@ -145,60 +147,61 @@ export default function CreateTenantScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Tenant</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Add Tenant</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
         {/* Unit selector */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Unit *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Unit *</Text>
           {isUnitLoading || isUnitsLoading ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color="#2563eb" />
+              <ActivityIndicator size="small" color={colors.accent} />
             </View>
           ) : unit ? (
             <TouchableOpacity
-              style={styles.unitCard}
+              style={[styles.unitCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => !params.unitId && setUnitPickerVisible(true)}
               activeOpacity={params.unitId ? 1 : 0.7}
             >
               <View style={styles.unitCardLeft}>
-                <View style={styles.unitIconCircle}>
-                  <Home size={18} color="#2563eb" />
+                <View style={[styles.unitIconCircle, { backgroundColor: colors.background }]}>
+                  <Home size={18} color={colors.accent} />
                 </View>
                 <View>
-                  <Text style={styles.unitCardTitle}>{unit.unit_name}</Text>
-                  <Text style={styles.unitCardSub}>
+                  <Text style={[styles.unitCardTitle, { color: colors.textPrimary }]}>{unit.unit_name}</Text>
+                  <Text style={[styles.unitCardSub, { color: colors.textSecondary }]}>
                     {unit.property?.name ?? ''}
                   </Text>
                 </View>
               </View>
-              {!params.unitId && <ChevronDown size={18} color="#6b7280" />}
+              {!params.unitId && <ChevronDown size={18} color={colors.textSecondary} />}
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={styles.unitPickerBtn}
+              style={[styles.unitPickerBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => setUnitPickerVisible(true)}
             >
-              <Building2 size={18} color="#6b7280" />
-              <Text style={styles.unitPickerBtnText}>Select a unit</Text>
-              <ChevronDown size={18} color="#6b7280" />
+              <Building2 size={18} color={colors.textSecondary} />
+              <Text style={[styles.unitPickerBtnText, { color: colors.textSecondary }]}>Select a unit</Text>
+              <ChevronDown size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Full Name */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Full Name *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="Tenant full name"
+            placeholderTextColor={colors.textSecondary}
             value={fullName}
             onChangeText={setFullName}
           />
@@ -206,10 +209,11 @@ export default function CreateTenantScreen() {
 
         {/* Phone */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Phone *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Phone *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="Phone number"
+            placeholderTextColor={colors.textSecondary}
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
@@ -218,10 +222,11 @@ export default function CreateTenantScreen() {
 
         {/* ID Number */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>ID Number *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>ID Number *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="National ID / Passport"
+            placeholderTextColor={colors.textSecondary}
             value={idNumber}
             onChangeText={setIdNumber}
           />
@@ -229,10 +234,11 @@ export default function CreateTenantScreen() {
 
         {/* Emergency Contact */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Emergency Contact</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Emergency Contact</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="Name and phone"
+            placeholderTextColor={colors.textSecondary}
             value={emergencyContact}
             onChangeText={setEmergencyContact}
           />
@@ -240,10 +246,11 @@ export default function CreateTenantScreen() {
 
         {/* Deposit */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Deposit Amount</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Deposit Amount</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
             placeholder="0.00"
+            placeholderTextColor={colors.textSecondary}
             value={depositAmount}
             onChangeText={setDepositAmount}
             keyboardType="decimal-pad"
@@ -251,7 +258,7 @@ export default function CreateTenantScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Lease Start Date</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Lease Start Date</Text>
           <DatePickerInput
             value={leaseStartDate}
             onChange={setLeaseStartDate}
@@ -260,7 +267,7 @@ export default function CreateTenantScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Lease End Date</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Lease End Date</Text>
           <DatePickerInput
             value={leaseEndDate}
             onChange={setLeaseEndDate}
@@ -269,7 +276,7 @@ export default function CreateTenantScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.buttonDisabled]}
+          style={[styles.submitButton, { backgroundColor: colors.accent }, isLoading && styles.buttonDisabled]}
           onPress={handleSubmit}
           disabled={isLoading}
         >
@@ -293,20 +300,21 @@ export default function CreateTenantScreen() {
             style={styles.modalBg}
             onPress={() => setUnitPickerVisible(false)}
           />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Unit</Text>
+          <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Unit</Text>
               <TouchableOpacity onPress={() => setUnitPickerVisible(false)}>
-                <X size={22} color="#6b7280" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             {/* Search */}
-            <View style={styles.searchRow}>
-              <Search size={16} color="#9ca3af" />
+            <View style={[styles.searchRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Search size={16} color={colors.textSecondary} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: colors.textPrimary }]}
                 placeholder="Search by unit or property name…"
+                placeholderTextColor={colors.textSecondary}
                 value={unitSearch}
                 onChangeText={setUnitSearch}
                 autoCapitalize="none"
@@ -318,35 +326,49 @@ export default function CreateTenantScreen() {
               keyExtractor={(item) => item.id}
               style={styles.unitList}
               keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.unitListItem}
-                  onPress={() => handleSelectUnit(item)}
-                >
-                  <View style={styles.unitListIconCircle}>
-                    <Home size={18} color="#2563eb" />
-                  </View>
-                  <View style={styles.unitListInfo}>
-                    <Text style={styles.unitListName}>{item.unit_name}</Text>
-                    <Text style={styles.unitListSub}>
-                      {item.property?.name ?? ''}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      item.status === 'occupied' && styles.statusOccupied,
-                      item.status === 'vacant' && styles.statusVacant,
-                      item.status === 'maintenance' && styles.statusMaintenance,
-                    ]}
+              renderItem={({ item }) => {
+                const isOccupied = item.status === 'occupied';
+                const isVacant = item.status === 'vacant';
+                const isMaint = item.status === 'maintenance';
+                return (
+                  <TouchableOpacity
+                    style={[styles.unitListItem, { borderBottomColor: colors.border }]}
+                    onPress={() => handleSelectUnit(item)}
                   >
-                    <Text style={styles.statusBadgeText}>{item.status}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
+                    <View style={[styles.unitListIconCircle, { backgroundColor: colors.background }]}>
+                      <Home size={18} color={colors.accent} />
+                    </View>
+                    <View style={styles.unitListInfo}>
+                      <Text style={[styles.unitListName, { color: colors.textPrimary }]}>{item.unit_name}</Text>
+                      <Text style={[styles.unitListSub, { color: colors.textSecondary }]}>
+                        {item.property?.name ?? ''}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        isOccupied && { backgroundColor: colors.currentBg },
+                        isVacant && { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
+                        isMaint && { backgroundColor: colors.overdueBg },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusBadgeText,
+                          isOccupied && { color: colors.currentText },
+                          isVacant && { color: colors.textSecondary },
+                          isMaint && { color: colors.overdueText },
+                        ]}
+                      >
+                        {item.status}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
               ListEmptyComponent={
                 <View style={styles.emptyList}>
-                  <Text style={styles.emptyListText}>No units found</Text>
+                  <Text style={[styles.emptyListText, { color: colors.textSecondary }]}>No units found</Text>
                 </View>
               }
             />

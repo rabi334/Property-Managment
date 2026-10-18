@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { maintenanceService } from '@/services/maintenance.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import { Wrench, ChevronRight, Search, X, Plus } from 'lucide-react-native';
 import { MaintenanceStatus } from '@/types/database';
 
@@ -40,6 +41,7 @@ function formatStatus(status: string): string {
 export default function MaintenanceListScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,20 +100,20 @@ export default function MaintenanceListScreen() {
 
   if (isLoading && items.length === 0) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Maintenance</Text>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Maintenance</Text>
         {canManage && (
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/maintenance/create')}
           >
             <Plus size={18} color="#fff" />
@@ -121,13 +123,13 @@ export default function MaintenanceListScreen() {
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Search size={16} color="#9ca3af" />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <Search size={16} color={colors.textSecondary} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.textPrimary }]}
             placeholder="Search by title, unit, or property…"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textSecondary}
             value={search}
             onChangeText={setSearch}
             autoCapitalize="none"
@@ -138,14 +140,14 @@ export default function MaintenanceListScreen() {
               onPress={() => setSearch('')}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <X size={16} color="#9ca3af" />
+              <X size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
       </View>
 
       {/* Status Filter Chips */}
-      <View style={styles.filterRow}>
+      <View style={[styles.filterRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {STATUS_FILTERS.map((f) => {
           const count = counts[f.value] ?? 0;
           const isSelected = statusFilter === f.value;
@@ -154,14 +156,17 @@ export default function MaintenanceListScreen() {
               key={f.value}
               style={[
                 styles.filterChip,
-                isSelected && styles.filterChipSelected,
+                {
+                  backgroundColor: isSelected ? colors.accent : colors.card,
+                  borderColor: isSelected ? colors.accent : colors.border,
+                },
               ]}
               onPress={() => setStatusFilter(f.value)}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  isSelected && styles.filterChipTextSelected,
+                  { color: isSelected ? '#fff' : colors.textSecondary },
                 ]}
               >
                 {f.label}
@@ -170,13 +175,17 @@ export default function MaintenanceListScreen() {
                 <View
                   style={[
                     styles.filterBadge,
-                    isSelected && styles.filterBadgeSelected,
+                    {
+                      backgroundColor: isSelected
+                        ? 'rgba(255,255,255,0.25)'
+                        : colors.background,
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.filterBadgeText,
-                      isSelected && styles.filterBadgeTextSelected,
+                      { color: isSelected ? '#fff' : colors.textSecondary },
                     ]}
                   >
                     {count}
@@ -195,51 +204,67 @@ export default function MaintenanceListScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => router.push(`/maintenance/${item.id}`)}
-          >
-            <View style={styles.iconContainer}>
-              <Wrench size={22} color="#2563eb" />
-            </View>
-            <View style={styles.info}>
-              <Text style={styles.title} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={styles.subtitle} numberOfLines={1}>
-                {item.unit?.unit_name}
-                {item.unit?.property?.name
-                  ? ` • ${item.unit.property.name}`
-                  : ''}
-              </Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  item.status === 'pending' && styles.status_pending,
-                  item.status === 'in_progress' && styles.status_in_progress,
-                  item.status === 'completed' && styles.status_completed,
-                ]}
-              >
-                <Text style={styles.statusText}>
-                  {formatStatus(item.status)}
-                </Text>
+        renderItem={({ item }) => {
+          const isPending = item.status === 'pending';
+          const isInProgress = item.status === 'in_progress';
+          const isCompleted = item.status === 'completed';
+          return (
+            <TouchableOpacity
+              style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push(`/maintenance/${item.id}`)}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: colors.background }]}>
+                <Wrench size={22} color={colors.accent} />
               </View>
-            </View>
-            <ChevronRight size={20} color="#9ca3af" />
-          </TouchableOpacity>
-        )}
+              <View style={styles.info}>
+                <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {item.unit?.unit_name}
+                  {item.unit?.property?.name
+                    ? ` • ${item.unit.property.name}`
+                    : ''}
+                </Text>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    isPending && { backgroundColor: colors.overdueBg },
+                    isInProgress && {
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                    },
+                    isCompleted && { backgroundColor: colors.currentBg },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      isPending && { color: colors.overdueText },
+                      isInProgress && { color: colors.accent },
+                      isCompleted && { color: colors.currentText },
+                    ]}
+                  >
+                    {formatStatus(item.status)}
+                  </Text>
+                </View>
+              </View>
+              <ChevronRight size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          );
+        }}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Wrench size={64} color="#d1d5db" />
-            <Text style={styles.emptyText}>
+            <Wrench size={64} color={colors.border} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {search || statusFilter !== 'all'
                 ? 'No requests match your search'
                 : 'No maintenance requests yet'}
             </Text>
             {!search && statusFilter === 'all' && canManage && (
               <TouchableOpacity
-                style={styles.emptyButton}
+                style={[styles.emptyButton, { backgroundColor: colors.accent }]}
                 onPress={() => router.push('/maintenance/create')}
               >
                 <Text style={styles.emptyButtonText}>Create First Request</Text>

@@ -11,6 +11,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { paymentService } from '@/services/payment.service';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import {
   ArrowLeft,
   Trash2,
@@ -26,6 +27,7 @@ export default function PaymentDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [payment, setPayment] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,33 +92,33 @@ export default function PaymentDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   if (!payment) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Payment not found</Text>
+      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Payment not found</Text>
       </View>
     );
   }
 
   const methodColor: Record<string, string> = {
     cash: '#10b981',
-    bank: '#2563eb',
+    bank: colors.accent,
     mobile: '#f59e0b',
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Payment Details</Text>
         <View style={styles.headerActions}>
           {canDelete && (
             <TouchableOpacity
@@ -139,29 +141,29 @@ export default function PaymentDetailScreen() {
         contentContainerStyle={styles.contentContainer}
       >
         {/* Amount Card */}
-        <View style={styles.amountCard}>
+        <View style={[styles.amountCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.amountIconRow}>
-            <View style={styles.amountIconCircle}>
-              <DollarSign size={32} color="#10b981" />
+            <View style={[styles.amountIconCircle, { backgroundColor: colors.currentBg }]}>
+              <DollarSign size={32} color={colors.currentText} />
             </View>
           </View>
-          <Text style={styles.amountValue}>
+          <Text style={[styles.amountValue, { color: colors.currentText }]}>
             ${Number(payment.amount).toFixed(2)}
           </Text>
-          <Text style={styles.amountLabel}>Payment Received</Text>
+          <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Payment Received</Text>
         </View>
 
         {/* Details Card */}
-        <View style={styles.detailsCard}>
-          <Text style={styles.cardTitle}>Details</Text>
+        <View style={[styles.detailsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Details</Text>
 
           <View style={styles.row}>
-            <View style={styles.rowIcon}>
-              <Calendar size={18} color="#6b7280" />
+            <View style={[styles.rowIcon, { backgroundColor: colors.background }]}>
+              <Calendar size={18} color={colors.textSecondary} />
             </View>
             <View style={styles.rowContent}>
-              <Text style={styles.rowLabel}>Payment Date</Text>
-              <Text style={styles.rowValue}>
+              <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>Payment Date</Text>
+              <Text style={[styles.rowValue, { color: colors.textPrimary }]}>
                 {new Date(payment.payment_date).toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
@@ -172,14 +174,14 @@ export default function PaymentDetailScreen() {
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.row}>
-            <View style={styles.rowIcon}>
-              <CreditCard size={18} color="#6b7280" />
+            <View style={[styles.rowIcon, { backgroundColor: colors.background }]}>
+              <CreditCard size={18} color={colors.textSecondary} />
             </View>
             <View style={styles.rowContent}>
-              <Text style={styles.rowLabel}>Payment Method</Text>
+              <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>Payment Method</Text>
               <View
                 style={[
                   styles.methodBadge,
@@ -203,14 +205,14 @@ export default function PaymentDetailScreen() {
 
           {payment.notes && (
             <>
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
               <View style={styles.row}>
-                <View style={styles.rowIcon}>
-                  <FileText size={18} color="#6b7280" />
+                <View style={[styles.rowIcon, { backgroundColor: colors.background }]}>
+                  <FileText size={18} color={colors.textSecondary} />
                 </View>
                 <View style={styles.rowContent}>
-                  <Text style={styles.rowLabel}>Notes</Text>
-                  <Text style={styles.rowValue}>{payment.notes}</Text>
+                  <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>Notes</Text>
+                  <Text style={[styles.rowValue, { color: colors.textPrimary }]}>{payment.notes}</Text>
                 </View>
               </View>
             </>
@@ -219,37 +221,37 @@ export default function PaymentDetailScreen() {
 
         {/* Unit / Property Card */}
         {payment.unit && (
-          <View style={styles.detailsCard}>
-            <Text style={styles.cardTitle}>Property & Unit</Text>
+          <View style={[styles.detailsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Property & Unit</Text>
 
             {payment.unit.property && (
               <>
                 <View style={styles.row}>
-                  <View style={styles.rowIcon}>
-                    <Building2 size={18} color="#6b7280" />
+                  <View style={[styles.rowIcon, { backgroundColor: colors.background }]}>
+                    <Building2 size={18} color={colors.textSecondary} />
                   </View>
                   <View style={styles.rowContent}>
-                    <Text style={styles.rowLabel}>Property</Text>
-                    <Text style={styles.rowValue}>
+                    <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>Property</Text>
+                    <Text style={[styles.rowValue, { color: colors.textPrimary }]}>
                       {payment.unit.property.name}
                     </Text>
-                    <Text style={styles.rowSub}>
+                    <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
                       {payment.unit.property.address}
                     </Text>
                   </View>
                 </View>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
               </>
             )}
 
             <View style={styles.row}>
-              <View style={styles.rowIcon}>
-                <Home size={18} color="#6b7280" />
+              <View style={[styles.rowIcon, { backgroundColor: colors.background }]}>
+                <Home size={18} color={colors.textSecondary} />
               </View>
               <View style={styles.rowContent}>
-                <Text style={styles.rowLabel}>Unit</Text>
-                <Text style={styles.rowValue}>{payment.unit.unit_name}</Text>
-                <Text style={styles.rowSub}>
+                <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>Unit</Text>
+                <Text style={[styles.rowValue, { color: colors.textPrimary }]}>{payment.unit.unit_name}</Text>
+                <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
                   ${Number(payment.unit.rent_amount).toFixed(2)} /{' '}
                   {payment.unit.rent_type}
                 </Text>
@@ -259,7 +261,7 @@ export default function PaymentDetailScreen() {
         )}
 
         {/* Meta */}
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: colors.textSecondary }]}>
           Recorded on{' '}
           {new Date(payment.created_at).toLocaleDateString('en-US', {
             year: 'numeric',

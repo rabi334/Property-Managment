@@ -20,6 +20,7 @@ import {
 } from '@/services/auth.service';
 import { UserRole } from '@/types/database';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import {
   Users,
   UserPlus,
@@ -36,15 +37,10 @@ import {
 
 const ROLES: UserRole[] = ['MANAGER', 'VISITOR'];
 
-const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  OWNER: { bg: '#dbeafe', text: '#1d4ed8' },
-  MANAGER: { bg: '#d1fae5', text: '#065f46' },
-  VISITOR: { bg: '#fef3c7', text: '#92400e' },
-};
-
 export default function ManageUsersScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   // List state
   const [users, setUsers] = useState<any[]>([]);
@@ -174,74 +170,74 @@ export default function ManageUsersScreen() {
 
   if (!isOwner) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.centerText}>Only owners can manage users.</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.centerText, { color: colors.textSecondary }]}>Only owners can manage users.</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Users</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Manage Users</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* ── Create Form ── */}
-        <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>Invite User</Text>
+        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Invite User</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name *</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
               value={fullName}
               onChangeText={setFullName}
               placeholder="User full name"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email *</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Email *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
               value={email}
               onChangeText={setEmail}
               placeholder="user@example.com"
               autoCapitalize="none"
               keyboardType="email-address"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Phone</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
               value={phone}
               onChangeText={setPhone}
               placeholder="Phone number"
               keyboardType="phone-pad"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Temporary Password *</Text>
-            <View style={styles.passwordWrapper}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Temporary Password *</Text>
+            <View style={[styles.passwordWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.textPrimary }]}
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Min 6 characters"
                 secureTextEntry={!showPassword}
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textSecondary}
               />
               <TouchableOpacity
                 style={styles.eyeBtn}
@@ -249,44 +245,50 @@ export default function ManageUsersScreen() {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 {showPassword ? (
-                  <EyeOff size={20} color="#6b7280" />
+                  <EyeOff size={20} color={colors.textSecondary} />
                 ) : (
-                  <Eye size={20} color="#6b7280" />
+                  <Eye size={20} color={colors.textSecondary} />
                 )}
               </TouchableOpacity>
             </View>
-            <Text style={styles.inputHint}>
+            <Text style={[styles.inputHint, { color: colors.textSecondary }]}>
               Share this password with the user so they can log in.
             </Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Role *</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Role *</Text>
             <View style={styles.roleRow}>
-              {ROLES.map((r) => (
-                <TouchableOpacity
-                  key={r}
-                  style={[
-                    styles.roleChip,
-                    role === r && styles.roleChipSelected,
-                  ]}
-                  onPress={() => setRole(r)}
-                >
-                  <Text
+              {ROLES.map((r) => {
+                const isSelected = role === r;
+                return (
+                  <TouchableOpacity
+                    key={r}
                     style={[
-                      styles.roleChipText,
-                      role === r && styles.roleChipTextSelected,
+                      styles.roleChip,
+                      {
+                        backgroundColor: isSelected ? colors.accent : colors.card,
+                        borderColor: isSelected ? colors.accent : colors.border,
+                      },
                     ]}
+                    onPress={() => setRole(r)}
                   >
-                    {r}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.roleChipText,
+                        { color: isSelected ? '#fff' : colors.textSecondary },
+                      ]}
+                    >
+                      {r}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
           <TouchableOpacity
-            style={[styles.submitButton, isSubmitting && styles.buttonDisabled]}
+            style={[styles.submitButton, { backgroundColor: colors.accent }, isSubmitting && styles.buttonDisabled]}
             onPress={handleCreate}
             disabled={isSubmitting}
           >
@@ -300,14 +302,14 @@ export default function ManageUsersScreen() {
 
         {/* ── Team Members List ── */}
         <View style={styles.listHeaderRow}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Team Members{users.length > 0 ? ` (${users.length})` : ''}
           </Text>
         </View>
 
         {isLoading ? (
           <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color="#2563eb" />
+            <ActivityIndicator size="small" color={colors.accent} />
           </View>
         ) : (
           <FlatList
@@ -315,38 +317,43 @@ export default function ManageUsersScreen() {
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
             renderItem={({ item }) => {
-              const roleStyle = ROLE_COLORS[item.role] ?? ROLE_COLORS.VISITOR;
+              const isOwnerRole = item.role === 'OWNER';
+              const isManagerRole = item.role === 'MANAGER';
               return (
-                <View style={styles.userCard}>
-                  <View style={styles.userIcon}>
-                    <Users size={20} color="#2563eb" />
+                <View style={[styles.userCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[styles.userIcon, { backgroundColor: colors.background }]}>
+                    <Users size={20} color={colors.accent} />
                   </View>
 
                   <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{item.full_name}</Text>
+                    <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.full_name}</Text>
 
                     <View style={styles.userMetaRow}>
-                      <Mail size={12} color="#6b7280" />
-                      <Text style={styles.userMetaText}>{item.email}</Text>
+                      <Mail size={12} color={colors.textSecondary} />
+                      <Text style={[styles.userMetaText, { color: colors.textSecondary }]}>{item.email}</Text>
                     </View>
 
                     {item.phone ? (
                       <View style={styles.userMetaRow}>
-                        <Phone size={12} color="#6b7280" />
-                        <Text style={styles.userMetaText}>{item.phone}</Text>
+                        <Phone size={12} color={colors.textSecondary} />
+                        <Text style={[styles.userMetaText, { color: colors.textSecondary }]}>{item.phone}</Text>
                       </View>
                     ) : null}
 
                     <View
                       style={[
                         styles.roleBadge,
-                        { backgroundColor: roleStyle.bg },
+                        isOwnerRole && { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
+                        isManagerRole && { backgroundColor: colors.currentBg },
+                        !isOwnerRole && !isManagerRole && { backgroundColor: colors.overdueBg },
                       ]}
                     >
                       <Text
                         style={[
                           styles.roleBadgeText,
-                          { color: roleStyle.text },
+                          isOwnerRole && { color: colors.accent },
+                          isManagerRole && { color: colors.currentText },
+                          !isOwnerRole && !isManagerRole && { color: colors.overdueText },
                         ]}
                       >
                         {item.role}
@@ -358,15 +365,15 @@ export default function ManageUsersScreen() {
                   <View style={styles.userActions}>
                     {item.role !== 'OWNER' && (
                       <TouchableOpacity
-                        style={styles.actionBtn}
+                        style={[styles.actionBtn, { backgroundColor: colors.background }]}
                         onPress={() => openEdit(item)}
                       >
-                        <Edit size={18} color="#2563eb" />
+                        <Edit size={18} color={colors.accent} />
                       </TouchableOpacity>
                     )}
                     {item.role !== 'OWNER' && (
                       <TouchableOpacity
-                        style={[styles.actionBtn, styles.deleteBtn]}
+                        style={[styles.actionBtn, styles.deleteBtn, { backgroundColor: colors.background }]}
                         onPress={() => handleDelete(item)}
                       >
                         <Trash2 size={18} color="#ef4444" />
@@ -378,8 +385,8 @@ export default function ManageUsersScreen() {
             }}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <UserPlus size={48} color="#d1d5db" />
-                <Text style={styles.emptyText}>
+                <UserPlus size={48} color={colors.border} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                   No team members yet. Invite managers or visitors above.
                 </Text>
               </View>
@@ -400,82 +407,89 @@ export default function ManageUsersScreen() {
             style={styles.modalBg}
             onPress={() => setEditVisible(false)}
           />
-          <View style={styles.modalSheet}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
             {/* Modal header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit User</Text>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Edit User</Text>
               <TouchableOpacity onPress={() => setEditVisible(false)}>
-                <X size={22} color="#6b7280" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.modalContent}>
               {/* Full name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Full Name *</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
                   value={editFullName}
                   onChangeText={setEditFullName}
                   placeholder="User full name"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
 
               {/* Phone */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Phone</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
                   value={editPhone}
                   onChangeText={setEditPhone}
                   placeholder="Phone number"
                   keyboardType="phone-pad"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
 
               {/* Role */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Role *</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Role *</Text>
                 <View style={styles.roleRow}>
-                  {ROLES.map((r) => (
-                    <TouchableOpacity
-                      key={r}
-                      style={[
-                        styles.roleChip,
-                        editRole === r && styles.roleChipSelected,
-                      ]}
-                      onPress={() => setEditRole(r as 'MANAGER' | 'VISITOR')}
-                    >
-                      <Text
+                  {ROLES.map((r) => {
+                    const isSelected = editRole === r;
+                    return (
+                      <TouchableOpacity
+                        key={r}
                         style={[
-                          styles.roleChipText,
-                          editRole === r && styles.roleChipTextSelected,
+                          styles.roleChip,
+                          {
+                            backgroundColor: isSelected ? colors.accent : colors.card,
+                            borderColor: isSelected ? colors.accent : colors.border,
+                          },
                         ]}
+                        onPress={() => setEditRole(r as 'MANAGER' | 'VISITOR')}
                       >
-                        {r}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                        <Text
+                          style={[
+                            styles.roleChipText,
+                            { color: isSelected ? '#fff' : colors.textSecondary },
+                          ]}
+                        >
+                          {r}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
 
               {/* Email (read-only) */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Email</Text>
                 <TextInput
-                  style={[styles.input, styles.inputDisabled]}
+                  style={[styles.input, styles.inputDisabled, { backgroundColor: colors.background, borderColor: colors.border, color: colors.textSecondary }]}
                   value={editUser?.email ?? ''}
                   editable={false}
                 />
-                <Text style={styles.inputHint}>Email cannot be changed.</Text>
+                <Text style={[styles.inputHint, { color: colors.textSecondary }]}>Email cannot be changed.</Text>
               </View>
 
               {/* Save button */}
               <TouchableOpacity
                 style={[
                   styles.submitButton,
+                  { backgroundColor: colors.accent },
                   isEditSaving && styles.buttonDisabled,
                 ]}
                 onPress={handleEditSave}

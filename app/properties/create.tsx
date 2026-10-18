@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { usePropertyStore } from '@/stores/propertyStore';
+import { useTheme } from '@/hooks/useTheme';
 import { PropertyType } from '@/types/database';
 import { ArrowLeft, Camera, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +22,7 @@ const PROPERTY_TYPES: PropertyType[] = ['apartment', 'commercial', 'mixed-use'];
 
 export default function CreatePropertyScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { createProperty } = usePropertyStore();
   const [name, setName] = useState('');
   const [type, setType] = useState<PropertyType>('apartment');
@@ -98,19 +100,28 @@ export default function CreatePropertyScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Property</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Add Property
+        </Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
         {/* Image Picker */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Property Image</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Property Image
+          </Text>
           {imageUri ? (
             <View style={styles.imagePreviewWrapper}>
               <Image
@@ -126,10 +137,18 @@ export default function CreatePropertyScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-              <Camera size={32} color="#9ca3af" />
-              <Text style={styles.imagePickerText}>Tap to add a photo</Text>
-              <Text style={styles.imagePickerHint}>
+            <TouchableOpacity
+              style={[
+                styles.imagePicker,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+              onPress={pickImage}
+            >
+              <Camera size={32} color={colors.textSecondary} />
+              <Text style={[styles.imagePickerText, { color: colors.textPrimary }]}>
+                Tap to add a photo
+              </Text>
+              <Text style={[styles.imagePickerHint, { color: colors.textSecondary }]}>
                 Recommended: 16:9 ratio
               </Text>
             </TouchableOpacity>
@@ -137,31 +156,47 @@ export default function CreatePropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Property Name *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Property Name *
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter property name"
+            placeholderTextColor={colors.textSecondary}
             value={name}
             onChangeText={setName}
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Property Type *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Property Type *
+          </Text>
           <View style={styles.typeSelector}>
             {PROPERTY_TYPES.map((t) => (
               <TouchableOpacity
                 key={t}
                 style={[
                   styles.typeOption,
-                  type === t && styles.typeOptionSelected,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor:
+                      type === t ? colors.accent : colors.card,
+                  },
                 ]}
                 onPress={() => setType(t)}
               >
                 <Text
                   style={[
                     styles.typeOptionText,
-                    type === t && styles.typeOptionTextSelected,
+                    { color: type === t ? '#fff' : colors.textSecondary },
                   ]}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -172,10 +207,21 @@ export default function CreatePropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Address *</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Address *
+          </Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[
+              styles.input,
+              styles.textArea,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter property address"
+            placeholderTextColor={colors.textSecondary}
             value={address}
             onChangeText={setAddress}
             multiline
@@ -184,10 +230,20 @@ export default function CreatePropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tax Rate (%)</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Tax Rate (%)
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter tax rate"
+            placeholderTextColor={colors.textSecondary}
             value={taxRate}
             onChangeText={setTaxRate}
             keyboardType="decimal-pad"
@@ -195,10 +251,21 @@ export default function CreatePropertyScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Description</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Description
+          </Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[
+              styles.input,
+              styles.textArea,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.textPrimary,
+              },
+            ]}
             placeholder="Enter property description"
+            placeholderTextColor={colors.textSecondary}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -207,7 +274,11 @@ export default function CreatePropertyScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.buttonDisabled]}
+          style={[
+            styles.submitButton,
+            { backgroundColor: colors.accent },
+            isLoading && styles.buttonDisabled,
+          ]}
           onPress={handleSubmit}
           disabled={isLoading}
         >
