@@ -2,9 +2,8 @@ import { Router } from 'express';
 import type { Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { body, param, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, AuthRequest, getOwnerId } from '../middleware/auth';
 import { requireOwner } from '../middleware/rbac';
-import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 const router = Router();
 
@@ -12,7 +11,9 @@ router.use(authMiddleware);
 
 router.get('/', requireOwner, async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const users = await prisma.user.findMany({
+      where: { createdById: ownerId },
       select: {
         id: true,
         email: true,
@@ -58,6 +59,7 @@ router.post(
       }
 
       const { email, password, full_name, role, phone } = req.body;
+      const ownerId = getOwnerId(req.user);
 
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
@@ -72,7 +74,7 @@ router.post(
           fullName: full_name,
           role,
           phone: phone || null,
-          createdById: req.user!.id,
+          createdById: ownerId,
         },
         select: {
           id: true,
@@ -120,6 +122,14 @@ router.patch(
         return res
           .status(400)
           .json({ error: 'Cannot edit your own account here' });
+      }
+
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.user.findFirst({
+        where: { id: req.params.id, createdById: ownerId },
+      });
+      if (!existing) {
+        return res.status(404).json({ error: 'User not found' });
       }
 
       const { full_name, role, phone } = req.body;
@@ -175,9 +185,9 @@ router.delete(
           .json({ error: 'Cannot delete your own account' });
       }
 
-      // Prevent deleting any OWNER account
-      const targetUser = await prisma.user.findUnique({
-        where: { id: req.params.id },
+      const ownerId = getOwnerId(req.user);
+      const targetUser = await prisma.user.findFirst({
+        where: { id: req.params.id, createdById: ownerId },
         select: { id: true, role: true },
       });
       if (!targetUser) {
@@ -207,3 +217,4 @@ router.delete(
 );
 
 export { router as usersRouter };
+

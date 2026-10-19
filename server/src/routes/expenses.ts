@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, getOwnerId } from '../middleware/auth';
 import { requireManage, requireOwner } from '../middleware/rbac';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
@@ -45,8 +45,9 @@ function toExpenseResponse(e: any, includeProperty = false) {
   return base;
 }
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const propertyId =
       typeof req.query.propertyId === 'string'
         ? req.query.propertyId
@@ -59,7 +60,9 @@ router.get('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid propertyId' });
     }
 
-    const where: any = {};
+    const where: any = {
+      property: { createdById: ownerId },
+    };
     if (propertyId) where.propertyId = propertyId;
     if (from || to) {
       where.date = {
@@ -93,12 +96,13 @@ router.get('/', async (req: Request, res: Response) => {
 router.get(
   '/by-property/:propertyId',
   [param('propertyId').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid property ID' });
 
+      const ownerId = getOwnerId(req.user);
       const from =
         typeof req.query.from === 'string' ? req.query.from : undefined;
       const to = typeof req.query.to === 'string' ? req.query.to : undefined;
@@ -126,7 +130,11 @@ router.get(
           : {};
 
       const expenses = await prisma.expense.findMany({
-        where: { propertyId: req.params.propertyId, ...dateWhere },
+        where: {
+          propertyId: req.params.propertyId,
+          property: { createdById: ownerId },
+          ...dateWhere,
+        },
         orderBy: { date: 'desc' },
       });
       res.json(expenses.map((e) => toExpenseResponse(e)));
@@ -140,14 +148,15 @@ router.get(
 router.get(
   '/:id',
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
 
-      const expense = await prisma.expense.findUnique({
-        where: { id: req.params.id },
+      const ownerId = getOwnerId(req.user);
+      const expense = await prisma.expense.findFirst({
+        where: { id: req.params.id, property: { createdById: ownerId } },
         include: { property: true },
       });
 
@@ -181,6 +190,12 @@ router.post(
       }
 
       const { property_id, category, amount, description, date } = req.body;
+      const ownerId = getOwnerId(req.user);
+
+      const property = await prisma.property.findFirst({
+        where: { id: property_id, createdById: ownerId },
+      });
+      if (!property) return res.status(404).json({ error: 'Property not found' });
 
       const expense = await prisma.expense.create({
         data: {
@@ -214,14 +229,29 @@ router.patch(
     body('description').optional().trim().notEmpty(),
     body('date').optional().isISO8601(),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ error: errors.array()[0].msg });
       }
 
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.expense.findFirst({
+        where: { id: req.params.id, property: { createdById: ownerId } },
+      });
+      if (!existing) return res.status(404).json({ error: 'Expense not found' });
+
       const { property_id, category, amount, description, date } = req.body;
+
+      if (property_id !== undefined && property_id !== existing.propertyId) {
+        const targetProp = await prisma.property.findFirst({
+          where: { id: property_id, createdById: ownerId },
+        });
+        if (!targetProp)
+          return res.status(404).json({ error: 'Target property not found' });
+      }
+
       const updates: any = {};
       if (property_id !== undefined) updates.propertyId = property_id;
       if (category !== undefined) updates.category = category;
@@ -248,11 +278,17 @@ router.delete(
   '/:id',
   requireOwner,
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
+
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.expense.findFirst({
+        where: { id: req.params.id, property: { createdById: ownerId } },
+      });
+      if (!existing) return res.status(404).json({ error: 'Expense not found' });
 
       await prisma.expense.delete({ where: { id: req.params.id } });
       res.status(204).send();
@@ -266,3 +302,4 @@ router.delete(
 );
 
 export { router as expensesRouter };
+

@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { param, query, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, AuthRequest, getOwnerId } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 
 const router = Router();
@@ -15,8 +15,9 @@ function isUuid(value: unknown): boolean {
   );
 }
 
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const propertyId =
       typeof req.query.propertyId === 'string'
         ? req.query.propertyId
@@ -29,15 +30,28 @@ router.get('/stats', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid propertyId' });
     }
 
-    const propertyWhere = propertyId ? { id: propertyId } : {};
-    const unitWhere = propertyId ? { propertyId } : {};
-    const paymentWhere: any = {};
-    const expenseWhere: any = {};
-
-    if (propertyId) {
-      paymentWhere.unit = { propertyId };
-      expenseWhere.propertyId = propertyId;
-    }
+    const propertyWhere: any = {
+      createdById: ownerId,
+      ...(propertyId ? { id: propertyId } : {}),
+    };
+    const unitWhere: any = {
+      property: { createdById: ownerId },
+      ...(propertyId ? { propertyId } : {}),
+    };
+    const paymentWhere: any = {
+      unit: {
+        property: {
+          createdById: ownerId,
+          ...(propertyId ? { id: propertyId } : {}),
+        },
+      },
+    };
+    const expenseWhere: any = {
+      property: {
+        createdById: ownerId,
+        ...(propertyId ? { id: propertyId } : {}),
+      },
+    };
 
     if (from || to) {
       paymentWhere.paymentDate = {};
@@ -121,12 +135,13 @@ router.get('/stats', async (req: Request, res: Response) => {
 router.get(
   '/chart/:year',
   [param('year').isInt({ min: 2000, max: 2100 })],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid year' });
 
+      const ownerId = getOwnerId(req.user);
       const year = parseInt(req.params.year, 10);
       const propertyId =
         typeof req.query.propertyId === 'string'
@@ -144,7 +159,12 @@ router.get(
         const [payments, expenses] = await Promise.all([
           prisma.payment.findMany({
             where: {
-              ...(propertyId ? { unit: { propertyId } } : {}),
+              unit: {
+                property: {
+                  createdById: ownerId,
+                  ...(propertyId ? { id: propertyId } : {}),
+                },
+              },
               paymentDate: {
                 gte: new Date(`${startDate}T00:00:00.000Z`),
                 lte: new Date(`${endDate}T23:59:59.999Z`),
@@ -154,7 +174,10 @@ router.get(
           }),
           prisma.expense.findMany({
             where: {
-              ...(propertyId ? { propertyId } : {}),
+              property: {
+                createdById: ownerId,
+                ...(propertyId ? { id: propertyId } : {}),
+              },
               date: {
                 gte: new Date(`${startDate}T00:00:00.000Z`),
                 lte: new Date(`${endDate}T23:59:59.999Z`),
@@ -191,12 +214,13 @@ router.get(
 router.get(
   '/tax-report/:year',
   [param('year').isInt({ min: 2000, max: 2100 })],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid year' });
 
+      const ownerId = getOwnerId(req.user);
       const year = parseInt(req.params.year, 10);
       const propertyId =
         typeof req.query.propertyId === 'string'
@@ -209,7 +233,10 @@ router.get(
       const endDate = `${year}-12-31`;
 
       const properties = await prisma.property.findMany({
-        where: propertyId ? { id: propertyId } : undefined,
+        where: {
+          createdById: ownerId,
+          ...(propertyId ? { id: propertyId } : {}),
+        },
         select: { id: true, name: true, taxRate: true },
       });
 
@@ -259,8 +286,9 @@ router.get(
   },
 );
 
-router.get('/expiring-leases', async (req: Request, res: Response) => {
+router.get('/expiring-leases', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const propertyId =
       typeof req.query.propertyId === 'string'
         ? req.query.propertyId
@@ -279,11 +307,16 @@ router.get('/expiring-leases', async (req: Request, res: Response) => {
 
     const tenants = await prisma.tenant.findMany({
       where: {
+        unit: {
+          property: {
+            createdById: ownerId,
+            ...(propertyId ? { id: propertyId } : {}),
+          },
+        },
         leaseEndDate: {
           gte: now,
           lte: future,
         },
-        ...(propertyId ? { unit: { propertyId } } : {}),
       },
       include: {
         unit: {
@@ -330,3 +363,4 @@ router.get('/expiring-leases', async (req: Request, res: Response) => {
 });
 
 export { router as dashboardRouter };
+

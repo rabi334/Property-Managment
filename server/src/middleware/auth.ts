@@ -16,7 +16,13 @@ export interface AuthRequest extends Request {
     fullName: string;
     role: string;
     phone: string | null;
+    createdById: string | null;
   };
+}
+
+export function getOwnerId(user: AuthRequest['user']): string {
+  if (!user) throw new Error('Unauthenticated');
+  return user.role === 'OWNER' || !user.createdById ? user.id : user.createdById;
 }
 
 export function generateToken(user: {
@@ -71,6 +77,7 @@ export async function authMiddleware(
         fullName: true,
         role: true,
         phone: true,
+        createdById: true,
       },
     });
 
@@ -85,6 +92,7 @@ export async function authMiddleware(
       fullName: user.fullName,
       role: user.role,
       phone: user.phone,
+      createdById: user.createdById,
     };
     next();
   } catch {

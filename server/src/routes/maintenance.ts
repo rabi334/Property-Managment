@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, getOwnerId } from '../middleware/auth';
 import { requireManage, requireOwner } from '../middleware/rbac';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
@@ -49,9 +49,11 @@ function toMaintenanceResponse(m: any, includeUnit = false) {
   return base;
 }
 
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const items = await prisma.maintenanceRequest.findMany({
+      where: { unit: { property: { createdById: ownerId } } },
       include: { unit: { include: { property: true } } },
       orderBy: { createdAt: 'desc' },
     });
@@ -65,13 +67,17 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get(
   '/:id',
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid ID' });
 
-      const item = await prisma.maintenanceRequest.findUnique({
-        where: { id: req.params.id },
+      const ownerId = getOwnerId(req.user);
+      const item = await prisma.maintenanceRequest.findFirst({
+        where: {
+          id: req.params.id,
+          unit: { property: { createdById: ownerId } },
+        },
         include: { unit: { include: { property: true } } },
       });
 
@@ -87,13 +93,17 @@ router.get(
   }
 );
 
-router.get('/by-unit/:unitId', [param('unitId').isUUID()], async (req: Request, res: Response) => {
+router.get('/by-unit/:unitId', [param('unitId').isUUID()], async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid unit ID' });
 
+    const ownerId = getOwnerId(req.user);
     const items = await prisma.maintenanceRequest.findMany({
-      where: { unitId: req.params.unitId },
+      where: {
+        unitId: req.params.unitId,
+        unit: { property: { createdById: ownerId } },
+      },
       orderBy: { createdAt: 'desc' },
     });
     res.json(items.map((m) => toMaintenanceResponse(m)));
@@ -120,6 +130,12 @@ router.post(
       }
 
       const { unit_id, title, description, status } = req.body;
+      const ownerId = getOwnerId(req.user);
+
+      const unit = await prisma.unit.findFirst({
+        where: { id: unit_id, property: { createdById: ownerId } },
+      });
+      if (!unit) return res.status(404).json({ error: 'Unit not found' });
 
       const item = await prisma.maintenanceRequest.create({
         data: {
@@ -148,12 +164,18 @@ router.patch(
     body('description').optional().trim().notEmpty(),
     body('status').optional().isIn(['pending', 'in_progress', 'completed']),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ error: errors.array()[0].msg });
       }
+
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.maintenanceRequest.findFirst({
+        where: { id: req.params.id, unit: { property: { createdById: ownerId } } },
+      });
+      if (!existing) return res.status(404).json({ error: 'Maintenance request not found' });
 
       const { title, description, status } = req.body;
       const updates: any = {};
@@ -175,10 +197,16 @@ router.patch(
   }
 );
 
-router.delete('/:id', requireOwner, [param('id').isUUID()], async (req: Request, res: Response) => {
+router.delete('/:id', requireOwner, [param('id').isUUID()], async (req: AuthRequest, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid ID' });
+
+    const ownerId = getOwnerId(req.user);
+    const existing = await prisma.maintenanceRequest.findFirst({
+      where: { id: req.params.id, unit: { property: { createdById: ownerId } } },
+    });
+    if (!existing) return res.status(404).json({ error: 'Maintenance request not found' });
 
     await prisma.maintenanceRequest.delete({ where: { id: req.params.id } });
     res.status(204).send();
@@ -190,3 +218,4 @@ router.delete('/:id', requireOwner, [param('id').isUUID()], async (req: Request,
 });
 
 export { router as maintenanceRouter };
+

@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, getOwnerId } from '../middleware/auth';
 import { requireManage, requireOwner } from '../middleware/rbac';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
@@ -62,9 +62,15 @@ function toTenantResponse(t: any, includeUnit = false) {
  */
 async function assertUnitAvailableForTenant(
   unitId: string,
+  ownerId?: string,
   excludeTenantId?: string,
 ) {
-  const unit = await prisma.unit.findUnique({ where: { id: unitId } });
+  const unit = await prisma.unit.findFirst({
+    where: {
+      id: unitId,
+      ...(ownerId ? { property: { createdById: ownerId } } : {}),
+    },
+  });
   if (!unit) {
     return { ok: false as const, status: 404, error: 'Unit not found' };
   }
@@ -94,14 +100,18 @@ async function assertUnitAvailableForTenant(
   return { ok: true as const, unit };
 }
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const rawStatus = req.query.status;
     const status: 'active' | 'past' | undefined =
-      rawStatus === 'active' || rawStatus === 'past' ? rawStatus : undefined;
+      rawStatus === 'active' || rawStatus === 'past' ? rawStatus as any : undefined;
 
     const tenants = await prisma.tenant.findMany({
-      where: status ? { status } : undefined,
+      where: {
+        unit: { property: { createdById: ownerId } },
+        ...(status ? { status } : {}),
+      },
       include: { unit: { include: { property: true } } },
       orderBy: { createdAt: 'desc' },
     });
@@ -112,10 +122,14 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/rent-status', async (req: Request, res: Response) => {
+router.get('/rent-status', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const activeTenants = await prisma.tenant.findMany({
-      where: { status: 'active' },
+      where: {
+        status: 'active',
+        unit: { property: { createdById: ownerId } },
+      },
       include: { unit: { include: { property: true } } },
     });
 
@@ -241,14 +255,15 @@ router.get('/rent-status', async (req: Request, res: Response) => {
 router.get(
   '/:id',
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
 
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: req.params.id },
+      const ownerId = getOwnerId(req.user);
+      const tenant = await prisma.tenant.findFirst({
+        where: { id: req.params.id, unit: { property: { createdById: ownerId } } },
         include: { unit: { include: { property: true } } },
       });
       if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
@@ -266,14 +281,19 @@ router.get(
 router.get(
   '/by-unit/:unitId',
   [param('unitId').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid unit ID' });
 
+      const ownerId = getOwnerId(req.user);
       const tenant = await prisma.tenant.findFirst({
-        where: { unitId: req.params.unitId, status: 'active' },
+        where: {
+          unitId: req.params.unitId,
+          status: 'active',
+          unit: { property: { createdById: ownerId } },
+        },
         include: { unit: { include: { property: true } } },
       });
 
@@ -316,7 +336,8 @@ router.post(
         lease_end_date,
       } = req.body;
 
-      const check = await assertUnitAvailableForTenant(unit_id);
+      const ownerId = getOwnerId(req.user);
+      const check = await assertUnitAvailableForTenant(unit_id, ownerId);
       if (!check.ok)
         return res.status(check.status).json({ error: check.error });
 
@@ -366,15 +387,16 @@ router.patch(
     body('lease_start_date').optional(),
     body('lease_end_date').optional(),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ error: errors.array()[0].msg });
       }
 
-      const existing = await prisma.tenant.findUnique({
-        where: { id: req.params.id },
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.tenant.findFirst({
+        where: { id: req.params.id, unit: { property: { createdById: ownerId } } },
       });
       if (!existing) return res.status(404).json({ error: 'Tenant not found' });
 
@@ -404,6 +426,7 @@ router.patch(
       ) {
         const check = await assertUnitAvailableForTenant(
           newUnitId,
+          ownerId,
           existing.id,
         );
         if (!check.ok)
@@ -467,11 +490,17 @@ router.delete(
   '/:id',
   requireOwner,
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
+
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.tenant.findFirst({
+        where: { id: req.params.id, unit: { property: { createdById: ownerId } } },
+      });
+      if (!existing) return res.status(404).json({ error: 'Tenant not found' });
 
       await prisma.tenant.delete({ where: { id: req.params.id } });
       res.status(204).send();
@@ -491,3 +520,4 @@ router.delete(
 );
 
 export { router as tenantsRouter };
+

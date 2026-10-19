@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, getOwnerId } from '../middleware/auth';
 import { requireManage, requireOwner } from '../middleware/rbac';
 import { AuthRequest } from '../middleware/auth';
 import { serializePropertyType } from '../utils/serialize';
@@ -27,9 +27,11 @@ function toPropertyResponse(p: any) {
   };
 }
 
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const properties = await prisma.property.findMany({
+      where: { createdById: ownerId },
       orderBy: { createdAt: 'desc' },
     });
     res.json(properties.map(toPropertyResponse));
@@ -42,14 +44,15 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get(
   '/:id',
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
 
-      const property = await prisma.property.findUnique({
-        where: { id: req.params.id },
+      const ownerId = getOwnerId(req.user);
+      const property = await prisma.property.findFirst({
+        where: { id: req.params.id, createdById: ownerId },
         include: {
           units: true,
         },
@@ -102,6 +105,7 @@ router.post(
       const { name, type, address, tax_rate, description, image_url } =
         req.body;
       const dbType = type === 'mixed-use' ? 'mixed_use' : type;
+      const ownerId = getOwnerId(req.user);
 
       const property = await prisma.property.create({
         data: {
@@ -111,7 +115,7 @@ router.post(
           taxRate: tax_rate,
           description: description || null,
           imageUrl: image_url || null,
-          createdById: req.user!.id,
+          createdById: ownerId,
         },
       });
 
@@ -144,6 +148,14 @@ router.patch(
         return res.status(400).json({ error: errors.array()[0].msg });
       }
 
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.property.findFirst({
+        where: { id: req.params.id, createdById: ownerId },
+      });
+      if (!existing) {
+        return res.status(404).json({ error: 'Property not found' });
+      }
+
       const { name, type, address, tax_rate, description, image_url } =
         req.body;
       const updates: any = {};
@@ -174,11 +186,19 @@ router.delete(
   '/:id',
   requireOwner,
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
+
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.property.findFirst({
+        where: { id: req.params.id, createdById: ownerId },
+      });
+      if (!existing) {
+        return res.status(404).json({ error: 'Property not found' });
+      }
 
       await prisma.property.delete({ where: { id: req.params.id } });
       res.status(204).send();
@@ -192,3 +212,4 @@ router.delete(
 );
 
 export { router as propertiesRouter };
+

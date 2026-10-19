@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, getOwnerId } from '../middleware/auth';
 import { requireManage, requireOwner } from '../middleware/rbac';
 import { AuthRequest } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
@@ -67,8 +67,9 @@ function toPaymentResponse(p: any, includeRelations = false) {
   return base;
 }
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const ownerId = getOwnerId(req.user);
     const propertyId =
       typeof req.query.propertyId === 'string'
         ? req.query.propertyId
@@ -88,10 +89,19 @@ router.get('/', async (req: Request, res: Response) => {
     if (tenantId && !isUuid(tenantId))
       return res.status(400).json({ error: 'Invalid tenantId' });
 
-    const where: any = {};
+    const where: any = {
+      unit: {
+        property: { createdById: ownerId },
+      },
+    };
     if (unitId) where.unitId = unitId;
     if (tenantId) where.tenantId = tenantId;
-    if (propertyId) where.unit = { ...(where.unit || {}), propertyId };
+    if (propertyId) {
+      where.unit = {
+        ...where.unit,
+        propertyId,
+      };
+    }
     if (from || to) {
       where.paymentDate = {
         ...(from
@@ -124,14 +134,18 @@ router.get('/', async (req: Request, res: Response) => {
 router.get(
   '/by-unit/:unitId',
   [param('unitId').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid unit ID' });
 
+      const ownerId = getOwnerId(req.user);
       const payments = await prisma.payment.findMany({
-        where: { unitId: req.params.unitId },
+        where: {
+          unitId: req.params.unitId,
+          unit: { property: { createdById: ownerId } },
+        },
         include: { tenant: true },
         orderBy: { paymentDate: 'desc' },
       });
@@ -146,14 +160,18 @@ router.get(
 router.get(
   '/by-tenant/:tenantId',
   [param('tenantId').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid tenant ID' });
 
+      const ownerId = getOwnerId(req.user);
       const payments = await prisma.payment.findMany({
-        where: { tenantId: req.params.tenantId },
+        where: {
+          tenantId: req.params.tenantId,
+          tenant: { unit: { property: { createdById: ownerId } } },
+        },
         orderBy: { paymentDate: 'desc' },
       });
       res.json(payments.map((p) => toPaymentResponse(p)));
@@ -183,9 +201,13 @@ router.post(
 
       const { tenant_id, amount, payment_date, payment_method, notes } =
         req.body;
+      const ownerId = getOwnerId(req.user);
 
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenant_id },
+      const tenant = await prisma.tenant.findFirst({
+        where: {
+          id: tenant_id,
+          unit: { property: { createdById: ownerId } },
+        },
       });
       if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
       if (tenant.status !== 'active') {
@@ -219,14 +241,18 @@ router.post(
 router.get(
   '/:id',
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
 
-      const payment = await prisma.payment.findUnique({
-        where: { id: req.params.id },
+      const ownerId = getOwnerId(req.user);
+      const payment = await prisma.payment.findFirst({
+        where: {
+          id: req.params.id,
+          unit: { property: { createdById: ownerId } },
+        },
         include: { unit: { include: { property: true } }, tenant: true },
       });
       if (!payment) return res.status(404).json({ error: 'Payment not found' });
@@ -243,11 +269,20 @@ router.delete(
   '/:id',
   requireOwner,
   [param('id').isUUID()],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty())
         return res.status(400).json({ error: 'Invalid ID' });
+
+      const ownerId = getOwnerId(req.user);
+      const existing = await prisma.payment.findFirst({
+        where: {
+          id: req.params.id,
+          unit: { property: { createdById: ownerId } },
+        },
+      });
+      if (!existing) return res.status(404).json({ error: 'Payment not found' });
 
       await prisma.payment.delete({ where: { id: req.params.id } });
       res.status(204).send();
@@ -261,3 +296,4 @@ router.delete(
 );
 
 export { router as paymentsRouter };
+
